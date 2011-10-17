@@ -1,0 +1,108 @@
+<!--
+SASUA_Canteens XML config
+version 1.2
+-->
+<config>
+        <url>http://www2.sas.ua.pt/site/temp/</url>
+        <output-encoding>utf-8</output-encoding>
+        <!--<input-encoding>auto</input-encoding>-->
+        <input-encoding>iso8859-1</input-encoding>
+        <timezone>Europe/Lisbon</timezone>
+
+        <cache>
+                <param name="active">true</param>
+                <param name="path">cache/</param>
+                <param name="prefix"></param>
+                <param name="extension">cache</param>
+                <param name="filemod">0666</param>
+                <param name="separator">-</param>
+                <param name="hash">true</param>
+        </cache>
+
+        <curl>
+                <param name="user_agent">Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/535.1 (KHTML, like Gecko) Chrome/14.0.835.202 Safari/535.1</param>
+                <param name="connect_timeout">30</param>
+                <param name="timeout">30</param>
+                <param name="proxy"></param>
+        </curl>
+
+
+        <zones>
+                <zone name="santiago">
+                        <urls>
+                                <url type="day">alim_ementas_V2.asp</url>
+                                <url type="week">alim_ementas_V2.asp?cmd=week</url>
+                        </urls>
+
+                        <canteens>
+                                <canteen name="Refeitório de Santiago" meals="2" items="10" />
+                                <canteen name="Refeitório do Crasto" meals="2" items="9" />
+                                <canteen name="Snack-Bar/Self" meals="1" items="7" />
+                        </canteens>
+                </zone>
+
+                <zone name="estga">
+                        <urls>
+                                <url type="day">alim_ementas_ESTGA_V1.1.asp</url>
+                                <url type="week">alim_ementas_ESTGA_V1.1.asp?cmd=week</url>
+                        </urls>
+
+                        <canteens>
+                                <canteen name="Refeitório ESTGA" meals="2" items="8" />
+                        </canteens>
+                </zone>
+
+                <zone name="esan">
+                        <urls>
+                                <url type="day">alim_ementas_ESAN_V1.asp</url>
+                                <url type="week">alim_ementas_ESAN_V1.asp?cmd=week</url>
+                        </urls>
+
+                        <canteens>
+                                <canteen name="Refeitório ESAN" meals="2" items="8" />
+                        </canteens>
+                </zone>
+
+                <zone name="rest">
+                        <urls>
+                                <url type="day">alim_ementas_rest_V1.1.asp</url>
+                                <url type="week">alim_ementas_rest_V1.1.asp?cmd=week</url>
+                        </urls>
+
+                        <canteens>
+                                <canteen name="Restaurante Universitário" meals="1" items="6">
+                                        <items>
+                                                <item name="Sopa" />
+                                                <item name="Prato de carne" />
+                                                <item name="Prato de peixe" />
+                                                <item name="Buffet de entradas" />
+                                                <item name="Buffet de saladas" />
+                                                <item name="Buffet de sobremesas" />
+                                        </items>
+                                </canteen>
+                        </canteens>
+                </zone>
+        </zones>
+
+        <meals>
+                <meal name="Almoço" />
+                <meal name="Jantar" />
+                <no-meals><![CDATA[/encerrad(a|o)|não\s+é\s+servida\s+refeição|não\s+são\s+servidas\s+refeições|não\s+há\s+fornecimento\s+de\s+\w+|refeições\s+servidas\s+n(o|a)\s+\w+/i]]></no-meals>
+        </meals>
+
+        <parser>
+                <param name="rows_offset" type="day">2</param>
+                <param name="rows" type="day"><![CDATA[/html/body//table[@id="table1"]/tr/td]]></param>
+                <param name="menu_header" type="day"><![CDATA[strtoupper( $row->getAttribute( 'bgcolor' ) ) == '#C0C0C0']]></param>
+                <param name="menu_header" type="day" zone="rest"><![CDATA[(bool) preg_match( '/border\-bottom\-style\s*:\s*solid\s*;/', $row->getAttribute( 'style' ))]]></param>
+
+                <param name="rows_offset" type="week">0</param>
+                <param name="rows" type="week"><![CDATA[/html/body//table[@id="table3" or @id="table4"]/tr/td]]></param>
+                <param name="menu_header" type="week" skip_rows="1"><![CDATA[strtoupper( $row->getAttribute( 'bgcolor' ) ) == '#C0C0C0']]></param>
+                <param name="menu_header" type="week" zone="rest"><![CDATA[(bool) preg_match( '/border\-bottom\-style\s*:\s*solid\s*;/', $row->getAttribute( 'style' ))]]></param>
+
+                <param name="date_regex" type="week" format="dmy"><![CDATA[/\w+\s*,\s*(\d{1,2})\s+de\s+(\w+)\s+de\s+(\d{4})/im]]></param>
+                <param name="date_regex" type="week" zone="rest" format="dmy"><![CDATA[/(\d{1,2})\-(\d{1,2})-(\d{4})/m]]></param>
+        </parser>
+</config>
+<!-- vim: set expandtab tabstop=4 shiftwidth=4 softtabstop=4: -->
