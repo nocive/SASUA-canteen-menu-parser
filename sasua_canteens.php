@@ -183,10 +183,10 @@ class SASUA_Canteens extends SASUA_Canteens_Object
 		$inputEncoding = empty( $inputEncoding ) || $inputEncoding === 'auto' ? $this->__dom->encoding : $inputEncoding;
 		
 		$outputEncoding = $this->getOutputEncoding();
-		;
-		
+
+		$contentPt = &$content;
 		if (! empty( $inputEncoding )) {
-			SASUA_Canteens_Utility::convertEncoding( $inputEncoding, $outputEncoding, &$content );
+			SASUA_Canteens_Utility::convertEncoding( $inputEncoding, $outputEncoding, $contentPt );
 		} else {
 			trigger_error( 'Failed to detect website encoding, encoding conversion skipped', E_USER_NOTICE );
 		}
@@ -943,9 +943,7 @@ class SASUA_Canteens_Menus extends SASUA_Canteens_Menu_Object
 
 	public function __construct( $zone, $type )
 	{
-		if (empty( $this->tag )) {
-			throw new Exception( 'tag property cannot be empty' );
-		}
+		parent::__construct();
 		$this->zone = $zone;
 		$this->type = $type;
 	}
@@ -1009,18 +1007,15 @@ class SASUA_Canteens_Menu extends SASUA_Canteens_Menu_Object
 	public $disabled = false;
 	
 	public $tag = 'menu';
-	public $itemsTag = 'items';
+	public $tagItems = 'items';
 
 
 	public function __construct( $parent = null, $canteen, $meal, $date )
 	{
-		if (empty( $this->tag )) {
-			throw new Exception( 'tag property cannot be empty' );
+		parent::__construct( $parent );
+		if (empty( $this->tagItems )) {
+			throw new Exception( 'tagItems property cannot be empty' );
 		}
-		if (empty( $this->itemsTag )) {
-			throw new Exception( 'itemsTag property cannot be empty' );
-		}
-		$this->parent = $parent;
 		
 		$this->canteen = $canteen;
 		$this->meal = $meal;
@@ -1058,7 +1053,7 @@ class SASUA_Canteens_Menu extends SASUA_Canteens_Menu_Object
 			}
 		}
 		
-		$xml = "<{$this->tag}><{$this->itemsTag}>$xml</{$this->itemsTag}></{$this->tag}>";
+		$xml = "<{$this->tag}><{$this->tagItems}>$xml</{$this->tagItems}></{$this->tag}>";
 		
 		$xmlObj = parent::asXMLObj( $xml );
 		
@@ -1085,10 +1080,10 @@ class SASUA_Canteens_Menu extends SASUA_Canteens_Menu_Object
 		$obj->weekday = $this->weekday;
 		$obj->weekdayNr = $this->weekdayNr;
 		$obj->disabled = $this->disabled;
-		$obj->{$this->itemsTag} = array();
+		$obj->{$this->tagItems} = array();
 		if (! $this->disabled) {
 			foreach ( $this->children as $c ) {
-				$obj->{$this->itemsTag}[] = $c->asObj();
+				$obj->{$this->tagItems}[] = $c->asObj();
 			}
 		}
 		return $obj;
@@ -1111,11 +1106,7 @@ class SASUA_Canteens_Menu_Item extends SASUA_Canteens_Menu_Object
 
 	public function __construct( $parent = null, $name, $content )
 	{
-		if (empty( $this->tag )) {
-			throw new Exception( 'tag property cannot be empty' );
-		}
-		$this->parent = $parent;
-		
+		parent::__construct();
 		$this->name = $name;
 		$this->content = $content;
 	}
@@ -1152,9 +1143,18 @@ class SASUA_Canteens_Menu_Item extends SASUA_Canteens_Menu_Object
  */
 abstract class SASUA_Canteens_Menu_Object
 {
-	public $tag = 'menu_object';
+	public $tag;
 	public $parent;
 	public $children = array();
+
+
+	public function __construct( $parent = null )
+	{
+		if (empty( $this->tag )) {
+			throw new Exception( 'tag property cannot be empty' );
+		}
+		$this->parent = $parent;
+	}
 
 
 	public function asXMLObj( $xml = null )
