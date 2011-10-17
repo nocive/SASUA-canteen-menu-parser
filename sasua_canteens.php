@@ -140,7 +140,7 @@ class SASUA_Canteens extends SASUA_Canteens_Object
 		if ($cached && ($cacheData = $ckey->read()) !== false) {
 			$this->menus = $cacheData;
 		} else {
-			$this->fetch();
+			$this->load();
 			if ($cached) {
 				$ckey->write( $this->menus );
 			}
@@ -161,7 +161,7 @@ class SASUA_Canteens extends SASUA_Canteens_Object
 	}
 
 
-	public function fetch( $zone = null, $type = null )
+	public function load( $zone = null, $type = null )
 	{
 		if ($zone !== null && $type !== null) {
 			$this->__init( $zone, $type );
@@ -724,6 +724,10 @@ class SASUA_Canteens_Web extends SASUA_Canteens_Object
 		
 		foreach ( (array) $this->params as $pname => $data ) {
 			$tmp = explode( ':', $data );
+			if (count( $tmp ) !== 2) {
+				throw new Exception( 'Invalid params array' );
+			}
+
 			switch ($tmp[0]) {
 			case 'POST':
 				$this->{$pname} = isset( $_POST[$tmp[1]] ) ? $_POST[$tmp[1]] : null;
@@ -766,7 +770,7 @@ class SASUA_Canteens_Web extends SASUA_Canteens_Object
 		}
 		
 		try {
-			if (empty( $this->formats[$this->format] ) || ! in_array( $this->zone, $this->app->zones, true )) {
+			if (! in_array( $this->type, $this->app->types, true ) || ! in_array( $this->zone, $this->app->zones, true )) {
 				throw new InvalidRequestException();
 			}
 			
@@ -784,12 +788,13 @@ class SASUA_Canteens_Web extends SASUA_Canteens_Object
 		}
 		
 		if (isset( $e ) && $e instanceof Exception) {
+			$menus = is_object( $this->app->menus ) ? $this->app->menus : new SASUA_Canteens_Menus( $this->zone, $this->type );
 			switch ($this->format) {
 			default:
 			case 'xml':
-				$menus = $this->app->menus->asXMLObj();
+				$menus = SASUA_Canteens_Utility::XMLObj( $menus->asXML( false ) );
 				$menus->addChild( 'error', $errorMsg );
-				$output = $menus->asXML();
+				$output = $menus->document();
 				break;
 			case 'json':
 				$menus = $this->app->menus->asObj();
@@ -804,7 +809,7 @@ class SASUA_Canteens_Web extends SASUA_Canteens_Object
 			}
 		}
 		
-		$ctype = $this->formats[$this->format];
+		$ctype = ! empty( $this->formats[$this->format] ) ? $this->formats[$this->format] : 'application/octet-stream';
 		$charset = strtolower( $this->app->getOutputEncoding() );
 		header( "Content-Type: $ctype;charset=$charset" );
 		echo $output;
@@ -921,6 +926,17 @@ class SASUA_Canteens_Utility
 			$offset += $width;
 		}
 	} // hexDump }}}
+
+
+	public static function XMLObj( $xml )
+	{
+		if (! is_string( $xml )) {
+			throw new InvalidArgumentException( '$xml must be a string' );
+		}
+
+		$xml = ($xml[0] !== '<') ? "<$xml></$xml>" : $xml;
+		return new SimpleXMLElementXT( $xml, LIBXML_NOXMLDECL );
+	}
 }
 
 ######################################################################################################
@@ -965,7 +981,7 @@ class SASUA_Canteens_Menus extends SASUA_Canteens_Menu_Object
 		}
 		$xml = "<{$this->tag}>$xml</{$this->tag}>";
 		
-		$xmlObj = parent::asXMLObj( $xml );
+		$xmlObj = SASUA_Canteens_Utility::XMLObj( $xml );
 		
 		$xmlObj->addAttribute( 'zone', $this->zone );
 		$xmlObj->addAttribute( 'type', $this->type );
@@ -1053,9 +1069,8 @@ class SASUA_Canteens_Menu extends SASUA_Canteens_Menu_Object
 			}
 		}
 		
-		$xml = "<{$this->tag}><{$this->tagItems}>$xml</{$this->tagItems}></{$this->tag}>";
-		
-		$xmlObj = parent::asXMLObj( $xml );
+		$xml = "<{$this->tag}><{$this->tagItems}>$xml</{$this->tagItems}></{$this->tag}>";	
+		$xmlObj = SASUA_Canteens_Utility::XMLObj( $xml );
 		
 		$xmlObj->addAttribute( 'canteen', $this->canteen );
 		$xmlObj->addAttribute( 'meal', $this->meal );
@@ -1114,7 +1129,7 @@ class SASUA_Canteens_Menu_Item extends SASUA_Canteens_Menu_Object
 
 	public function asXML( $xmlDecl = false, $encoding = 'utf-8' )
 	{
-		$xmlObj = parent::asXMLObj();
+		$xmlObj = SASUA_Canteens_Utility::XMLObj( $this->tag );
 		$xmlObj->{0} = $this->content;
 		$xmlObj->addAttribute( 'name', $this->name );
 		
@@ -1157,21 +1172,7 @@ abstract class SASUA_Canteens_Menu_Object
 	}
 
 
-	public function asXMLObj( $xml = null )
-	{
-		$xml = $xml === null ? "<{$this->tag}></{$this->tag}>" : $xml;
-		return new SimpleXMLElementXT( $xml, LIBXML_NOXMLDECL );
-	}
-
-
-	public function asXML( $xmlDecl = false, $encoding = 'utf-8' )
-	{
-		$sxe = $this->asXMLObj();
-		return $sxe->document( null, array( 
-			'xml_declaration' => $xmlDecl, 
-			'encoding' => $encoding 
-		) );
-	}
+	abstract public function asXML( $xmlDecl = false, $encoding = 'utf-8' );
 
 
 	public function asObj()
