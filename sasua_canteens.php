@@ -393,6 +393,7 @@ class SASUA_Canteens extends SASUA_Canteens_Object
 						}
 					}
 					
+					$noMealsDefaultReason = (string) $this->config->meals->{'no-meals'}->attributes()->reason;
 					$noMealsPattern = (string) $this->config->meals->{'no-meals'};
 					if ($item == 0 && $noMealsPattern && preg_match( $noMealsPattern, $currentMealItems[1] )) {
 						$menu->disable( $currentMealItems[1] );
@@ -405,7 +406,7 @@ class SASUA_Canteens extends SASUA_Canteens_Object
 							}
 						}
 						if ($allEmpty) {
-							$menu->disable( 'Encerrado' );
+							$menu->disable( $noMealsDefaultReason );
 						}
 					}
 					

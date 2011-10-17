@@ -87,7 +87,7 @@ version 1.2
         <meals>
                 <meal name="Almoço" />
                 <meal name="Jantar" />
-                <no-meals><![CDATA[/encerrad(a|o)|não\s+é\s+servida\s+refeição|não\s+são\s+servidas\s+refeições|não\s+há\s+fornecimento\s+de\s+\w+|refeições\s+servidas\s+n(o|a)\s+\w+/i]]></no-meals>
+                <no-meals reason="Encerrado"><![CDATA[/encerrad(a|o)|não\s+é\s+servida\s+refeição|não\s+são\s+servidas\s+refeições|não\s+há\s+fornecimento\s+de\s+\w+|refeições\s+servidas\s+n(o|a)\s+\w+/i]]></no-meals>
         </meals>
 
         <parser>
