@@ -375,6 +375,9 @@ class SASUA_Canteens extends SASUA_Canteens_Object
 
 	private function __build( $dates, $items )
 	{
+		$noMealsDefaultReason = (string) $this->config->meals->{'no-meals'}->attributes()->reason;
+		$noMealsPattern = (string) $this->config->meals->{'no-meals'};
+
 		$mealCount = 0;
 		foreach ( $dates as $d ) {
 			foreach ( $this->config->zones->zone[$this->zoneIndex]->canteens->canteen as $c ) {
@@ -393,8 +396,6 @@ class SASUA_Canteens extends SASUA_Canteens_Object
 						}
 					}
 					
-					$noMealsDefaultReason = (string) $this->config->meals->{'no-meals'}->attributes()->reason;
-					$noMealsPattern = (string) $this->config->meals->{'no-meals'};
 					if ($item == 0 && $noMealsPattern && preg_match( $noMealsPattern, $currentMealItems[1] )) {
 						$menu->disable( $currentMealItems[1] );
 					} else {
