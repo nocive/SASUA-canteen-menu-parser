@@ -25,36 +25,114 @@
  */
 class SASUA_Canteens extends SASUA_Canteens_Object
 {
+	/**
+	 * @var		string
+	 * @access	public
+	 */
 	public $name = __CLASS__;
+	
+	/**
+	 * @var		string
+	 * @access	public
+	 */
 	public $title = 'SAS/UA canteen menu parser';
+	
+	/**
+	 * @var		string
+	 * @access	public
+	 */
 	public $version = '1.2';
 	
+	/**
+	 * @var		SimpleXMLElement
+	 * @access	public
+	 */
 	public $config;
+	
+	/**
+	 * @var		SASUA_Canteens_Menus
+	 * @access	public
+	 */
 	public $menus;
 	
+	/**
+	 * @var		array
+	 * @access	public
+	 */
 	public $zones;
+	
+	/**
+	 * @var		string
+	 * @access	public
+	 */
 	public $zone;
+	
+	/**
+	 * @var		int
+	 * @access	public
+	 */
 	public $zoneIndex;
+	
+	/**
+	 * @var		string
+	 * @access	public
+	 */
 	public $type;
+	
+	/**
+	 * @var		string
+	 * @access	public
+	 */
 	public $url;
 	
+	/**
+	 * @var		array
+	 * @access	public
+	 */
 	public $types = array( 
 		'day', 
 		'week' 
 	);
 	
+	/**
+	 * @var		array
+	 * @access	public
+	 */
 	public $curlOptions = array();
 	
-	private $__curlDefaults = array(
+	/**
+	 * @var		array
+	 * @access	private
+	 */
+	private $__curlDefaults = array( 
 		'user_agent' => '%NAME% >> %TITLE% v%VERSION%', 
 		'connect_timeout' => 30, 
 		'timeout' => 30, 
 		'proxy' => '' 
 	);
 	
+	/**
+	 * @var		resource
+	 * @access	private
+	 */
 	private $__curl;
+	
+	/**
+	 * @var		DOMDocument
+	 * @access	private
+	 */
 	private $__dom;
+	
+	/**
+	 * @var		DOMXPath
+	 * @access	private
+	 */
 	private $__xpath;
+	
+	/**
+	 * @var		array
+	 * @access	private
+	 */
 	private $__dependencies = array( 
 		'dom', 
 		'tidy', 
@@ -62,6 +140,14 @@ class SASUA_Canteens extends SASUA_Canteens_Object
 	);
 
 
+	/**
+	 * Enter description here ...
+	 * 
+	 * @param	string $cfgFilename					optional
+	 * @param	bool $cfgLoad						optional
+	 * @throws	PHPMissingRequirementException
+	 * @return	void
+	 */
 	public function __construct( $cfgFilename = null, $cfgLoad = true )
 	{
 		foreach ( $this->__dependencies as $dep ) {
@@ -76,17 +162,29 @@ class SASUA_Canteens extends SASUA_Canteens_Object
 		if ($cfgLoad) {
 			$this->loadConfig( $cfgFilename );
 		}
-	}
+	} // __construct }}}
 
 
+	/**
+	 * Enter description here ...
+	 * 
+	 * @return	void
+	 */
 	public function __destruct()
 	{
 		if ($this->__curl) {
 			curl_close( $this->__curl );
 		}
-	}
+	} // __destruct }}}
 
 
+	/**
+	 * Enter description here ...
+	 * 
+	 * @param	string $filename
+	 * @throws	Exception
+	 * @return	SimpleXMLElement
+	 */
 	public function loadConfig( $filename )
 	{
 		if (! is_file( $filename ) || ! is_readable( $filename )) {
@@ -124,7 +222,7 @@ class SASUA_Canteens extends SASUA_Canteens_Object
 		}
 		
 		$curlOpts = array();
-		foreach ( $this->config->curl->param as $opt ) {
+		foreach ( $config->curl->param as $opt ) {
 			$curlOpts[(string) $opt->attributes()->name] = (string) $opt;
 		}
 		$curlOpts = array_merge( $this->__curlDefaults, $curlOpts );
@@ -132,12 +230,12 @@ class SASUA_Canteens extends SASUA_Canteens_Object
 		$s = array( 
 			'%TITLE%', 
 			'%NAME%', 
-			'%VERSION%'
+			'%VERSION%' 
 		);
 		$r = array( 
-			$this->title,
-			$this->name,
-			$this->version
+			$this->title, 
+			$this->name, 
+			$this->version 
 		);
 		$curlOpts['user_agent'] = str_replace( $s, $r, $curlOpts['user_agent'] );
 		$this->curlOptions = $curlOpts;
@@ -155,9 +253,20 @@ class SASUA_Canteens extends SASUA_Canteens_Object
 		
 		$this->config = $config;
 		$this->zones = $zones;
-	}
+		
+		return $this->config;
+	} // loadConfig }}}
 
 
+	/**
+	 * Enter description here ...
+	 *
+	 * @param	string $zone
+	 * @param	string $type
+	 * @param	string $format	optional
+	 * @param	bool $cached	optional
+	 * @return	string
+	 */
 	public function get( $zone, $type, $format = 'xml', $cached = true )
 	{
 		$this->__init( $zone, $type );
@@ -187,9 +296,16 @@ class SASUA_Canteens extends SASUA_Canteens_Object
 		default:
 			return $this->menus->asXML( true, $this->getOutputEncoding() );
 		}
-	}
+	} // get }}}
 
 
+	/**
+	 * Enter description here ...
+	 * 
+	 * @param	string $zone	optional
+	 * @param	string $type	optional
+	 * @return	void
+	 */
 	public function load( $zone = null, $type = null )
 	{
 		if ($zone !== null && $type !== null) {
@@ -212,7 +328,7 @@ class SASUA_Canteens extends SASUA_Canteens_Object
 		$inputEncoding = empty( $inputEncoding ) || $inputEncoding === 'auto' ? $this->__dom->encoding : $inputEncoding;
 		
 		$outputEncoding = $this->getOutputEncoding();
-
+		
 		if (! empty( $inputEncoding )) {
 			$content = SASUA_Canteens_Utility::convertEncoding( $inputEncoding, $outputEncoding, $content );
 		} else {
@@ -220,28 +336,53 @@ class SASUA_Canteens extends SASUA_Canteens_Object
 		}
 		
 		$this->__parse();
-	}
+	} // load }}}
 
 
+	/**
+	 * Enter description here ...
+	 * 
+	 * @param	string $zone
+	 * @param	string $type
+	 * @return	string|null
+	 */
 	public function getUrl( $zone, $type )
 	{
 		$result = $this->config->xpath( "/config/zones/zone[@name='$zone']/urls/url[@type='$type']" );
 		return ! empty( $result ) && is_array( $result ) ? (string) $result[0] : null;
-	}
+	} // getUrl }}}
 
 
+	/**
+	 * Enter description here ...
+	 * 
+	 * @return	string
+	 */
 	public function getInputEncoding()
 	{
 		return (string) $this->config->{'input-encoding'};
-	}
+	} // getInputEncoding }}}
 
 
+	/**
+	 * Enter description here ...
+	 * 
+	 * @return	string
+	 */
 	public function getOutputEncoding()
 	{
 		return (string) $this->config->{'output-encoding'};
-	}
+	} // getOutputEncoding }}}
 
 
+	/**
+	 * Enter description here ...
+	 * 
+	 * @param	string $zone
+	 * @param	string $type
+	 * @throws	InvalidArgumentException
+	 * @return	void
+	 */
 	private function __init( $zone, $type )
 	{
 		$this->__reset();
@@ -249,19 +390,22 @@ class SASUA_Canteens extends SASUA_Canteens_Object
 		$zone = strtolower( $zone );
 		$type = strtolower( $type );
 		
-		// this should be initialized before throwing any error
 		$this->zone = $zone;
 		$this->type = $type;
-		$this->menus = new SASUA_Canteens_Menus( $this->zone, $this->type );
 		$this->zoneIndex = array_search( $zone, $this->zones );
 		$this->url = $this->getUrl( $this->zone, $this->type );
 		if (empty( $this->url )) {
 			throw new InvalidArgumentException( "Missing or no url matching params, zone: '{$this->zone}', type: '{$this->type}'" );
 		}
-		$this->url = $url;
-	}
+		$this->menus = new SASUA_Canteens_Menus( $this->zone, $this->type );
+	} // __init }}}
 
 
+	/**
+	 * Enter description here ...
+	 * 
+	 * @return	void
+	 */
 	private function __reset()
 	{
 		$this->zone = null;
@@ -269,9 +413,14 @@ class SASUA_Canteens extends SASUA_Canteens_Object
 		$this->menus = null;
 		$this->zoneIndex = null;
 		$this->url = null;
-	}
+	} // __reset }}}
 
 
+	/**
+	 * Enter description here ...
+	 * 
+	 * @return	void
+	 */
 	private function __parse()
 	{
 		$this->__xpath = new DOMXPath( $this->__dom );
@@ -284,9 +433,14 @@ class SASUA_Canteens extends SASUA_Canteens_Object
 			$this->__parseWeeklyMenu();
 			break;
 		}
-	}
+	} // __parse }}}
 
 
+	/**
+	 * Enter description here ...
+	 * 
+	 * @return	void
+	 */
 	private function __parseDailyMenu()
 	{
 		$rows = $this->__xpath->query( $this->__getParserParam( 'rows', $this->type, $this->zone ) );
@@ -327,11 +481,14 @@ class SASUA_Canteens extends SASUA_Canteens_Object
 			}
 			$this->__build( $dates, $items );
 		}
-		
-		return $this->menus;
-	}
+	} // __parseDailyMenu }}}
 
 
+	/**
+	 * Enter description here ...
+	 * 
+	 * @return	void
+	 */
 	private function __parseWeeklyMenu()
 	{
 		$rows = $this->__xpath->query( $this->__getParserParam( 'rows', $this->type, $this->zone ) );
@@ -372,11 +529,20 @@ class SASUA_Canteens extends SASUA_Canteens_Object
 			$dates = array_unique( $dates );
 			$this->__build( $dates, $items );
 		}
-		
-		return $this->menus;
-	}
+	} // __parseWeeklyMenu }}}
 
 
+	/**
+	 * Enter description here ...
+	 * 
+	 * @param	string $name
+	 * @param	string $tyhpe
+	 * @param	string $zone	optional
+	 * @param	bool $eval		optional
+	 * @param	bool $flatten	optional
+	 * @throws 	Exception
+	 * @return	mixed
+	 */
 	private function __getParserParam( $name, $type, $zone = null, $eval = false, $flatten = true )
 	{
 		$query1 = "/config/parser/param[@name='$name' and @type='$type']";
@@ -398,14 +564,21 @@ class SASUA_Canteens extends SASUA_Canteens_Object
 		} else {
 			return $flatten ? (string) $param[0] : $param[0];
 		}
-	}
+	} // __getParserParam }}}
 
 
+	/**
+	 * Enter description here ...
+	 * 
+	 * @param	array $dates
+	 * @param	array $items
+	 * @return	void
+	 */
 	private function __build( $dates, $items )
 	{
 		$noMealsDefaultReason = (string) $this->config->meals->{'no-meals'}->attributes()->reason;
 		$noMealsPattern = (string) $this->config->meals->{'no-meals'};
-
+		
 		$mealCount = 0;
 		foreach ( $dates as $d ) {
 			foreach ( $this->config->zones->zone[$this->zoneIndex]->canteens->canteen as $c ) {
@@ -445,9 +618,18 @@ class SASUA_Canteens extends SASUA_Canteens_Object
 				}
 			}
 		}
-	}
+	} // __build }}}
 
 
+	/**
+	 * Enter description here ...
+	 * 
+	 * @param	string $date
+	 * @param	string $regex
+	 * @param	string $format
+	 * @throws	InvalidArgumentException
+	 * @return	string
+	 */
 	private function __parseDate( $date, $regex, $format )
 	{
 		$separator = '/';
@@ -480,9 +662,16 @@ class SASUA_Canteens extends SASUA_Canteens_Object
 			return date( 'r', strtotime( $date ) );
 		}
 		return false;
-	}
+	} // __parseDate }}}
 
 
+	/**
+	 * Enter description here ...
+	 * 
+	 * @param	string $url
+	 * @throws	HTTPFetchException
+	 * @return	string
+	 */
 	private function __fetch( $url )
 	{
 		if (! $this->__curl) {
@@ -502,205 +691,38 @@ class SASUA_Canteens extends SASUA_Canteens_Object
 			throw new HTTPFetchException( "Error fetching url '$url'" . (curl_errno( $this->__curl ) ? ', curl error: ' . curl_error( $this->__curl ) : '') );
 		}
 		return $content;
-	}
+	} // __fetch }}}
 
 
+	/**
+	 * Enter description here ...
+	 * 
+	 * @param	string $str
+	 * @return	string
+	 */
 	private function __sanitize( $str )
 	{
 		// replace all known unicode whitespaces with space
 		$str = preg_replace( '/[\pZ\pC]+/mu', ' ', $str );
 		$str = trim( $str );
 		return $str;
-	}
+	} // __sanitize }}}
 
 
+	/**
+	 * Enter description here ...
+	 * 
+	 * @param	string $str
+	 * @return	string
+	 */
 	private function __normalize( $str )
 	{
 		$str = ucfirst( strtolower( $str ) );
 		$str = preg_replace( '/^-$/', '', $str );
 		return $str;
-	}
-}
+	} // __normalize }}}
+} // SASUA_Canteens }}}
 
-/**
- * Cache class for app's specific needs
- *
- * @package SASUA_Canteens
- * @subpackage SASUA_Canteens::Cache
- */
-class SASUA_Canteens_Cache extends SASUA_Canteens_Object
-{
-	public static $config;
-	public static $active = false;
-	public static $defaults = array( 
-		'active' => false, 
-		'path' => '', 
-		'prefix' => '', 
-		'extension' => '', 
-		'filemod' => 0666, 
-		'separator' => '-', 
-		'hash' => true 
-	);
-	
-	private static $__gcLifetime = 86400;
-	private static $__gcProbability = 10;
-	private static $__gcDivisor = 100;
-
-
-	public static function key( $params = array() )
-	{
-		return new SASUA_Canteens_Cache_Key( $params, self::$config );
-	}
-
-
-	public static function write( $key, $data, $writeIfEmpty = false )
-	{
-		if (! self::$active || (! $writeIfEmpty && empty( $data ))) {
-			return false;
-		}
-		
-		if (($data = @serialize( $data )) === false) {
-			return false;
-		}
-		
-		$cfile = self::$config['path'] . DIRECTORY_SEPARATOR . $key;
-		$status = (@file_put_contents( $cfile, $data ) !== false);
-		if (! empty( self::$config['filemod'] )) {
-			@chmod( $cfile, self::$config['filemod'] );
-		}
-		return $status;
-	}
-
-
-	public static function read( $key )
-	{
-		if (! self::$active) {
-			return false;
-		}
-		
-		$cdata = false;
-		$cfile = self::$config['path'] . DIRECTORY_SEPARATOR . $key;
-		if (($content = @file_get_contents( $cfile )) !== false) {
-			$cdata = @unserialize( $content );
-		}
-		return $cdata;
-	}
-
-
-	public static function config( $config )
-	{
-		if (! is_array( $config )) {
-			$config = array( 
-				$config 
-			);
-		}
-		
-		if (! empty( $config[0] ) && $config[0] instanceof SimpleXMLElement) {
-			$tmp = array();
-			foreach ( $config as $c ) {
-				$tmp[(string) $c->attributes()->name] = (string) $c;
-			}
-			$config = $tmp;
-			unset( $tmp );
-		}
-		
-		$config = array_merge( self::$defaults, $config );
-		$config['active'] = (strtolower( $config['active'] ) === 'true' || $config['active'] === '1' || $config['active'] === true);
-		$config['filemod'] = is_string( $config['filemod'] ) ? octdec( $config['filemod'] ) : $config['filemod'];
-		$config['hash'] = ($config['hash'] && strtolower( $config['hash'] ) !== 'false' && $config['hash'] !== '0');
-		
-		if (! empty( $config['path'] )) {
-			if ($config['path'][0] !== DIRECTORY_SEPARATOR) {
-				$config['path'] = realpath( dirname( __FILE__ ) ) . DIRECTORY_SEPARATOR . $config['path'];
-			}
-			$config['path'] = rtrim( $config['path'], DIRECTORY_SEPARATOR );
-			
-			if (! is_dir( $config['path'] )) {
-				$mask = umask( 0 );
-				if (false === @mkdir( $config['path'], 0777 )) {
-					throw new Exception( "Could not create cache directory '{$config['path']}'" );
-				}
-				umask( $mask );
-			}
-			
-			self::$config = $config;
-			self::$active = true;
-		}
-	}
-
-
-	public static function gc()
-	{
-		if (self::$active && mt_rand( 1, self::$__gcDivisor ) <= self::$__gcProbability) {
-			foreach ( glob( self::$config['path'] . DIRECTORY_SEPARATOR . '*' ) as $file ) {
-				$fmtime = filemtime( $file );
-				if ($fmtime && ($fmtime + self::$__gcLifetime <= time())) {
-					@unlink( $file );
-				}
-			}
-		}
-	}
-}
-
-/**
- * Hold cache key generation login
- * Default behaviour is to append today's date making the cache last until midnight of that day
- * 
- */
-class SASUA_Canteens_Cache_Key
-{
-	public $key;
-	public $config = array( 
-		'prefix' => '', 
-		'extension' => '', 
-		'separator' => '-', 
-		'append_date' => true, 
-		'hash' => true 
-	);
-
-
-	public function __construct( $params = array(), $config = array() )
-	{
-		if (empty( $params )) {
-			throw new InvalidArgumentException( 'Invalid or missing params for generating key' );
-		}
-		if (! is_array( $params )) {
-			$params = array( 
-				$params 
-			);
-		}
-		$this->config = array_merge( $this->config, $config );
-		if (empty( $this->config['separator'] )) {
-			throw new InvalidArgumentException( 'Key separator cannot be empty' );
-		}
-		
-		$key = $this->config['prefix'];
-		$key .= $this->config['hash'] ? md5( implode( $this->config['separator'], $params ) ) : implode( $this->config['separator'], $params );
-		$key .= $this->config['append_date'] ? date( 'dmY' ) : '';
-		$key .= ! empty( $this->config['extension'] ) ? '.' . $this->config['extension'] : '';
-		
-		$this->key = $key;
-		return $this;
-	}
-
-
-	public function __toString()
-	{
-		return $this->key;
-	}
-
-
-	public function write( $data, $writeIfEmpty = false )
-	{
-		return SASUA_Canteens_Cache::write( $this->key, $data, $writeIfEmpty );
-	}
-
-
-	public function read()
-	{
-		return SASUA_Canteens_Cache::read( $this->key );
-	}
-}
 
 /**
  * Helper class for displaying SASUA_Canteens information for web applications
@@ -742,7 +764,7 @@ class SASUA_Canteens_Web extends SASUA_Canteens_Object
 			if (count( $tmp ) !== 2) {
 				throw new Exception( 'Invalid params array' );
 			}
-
+			
 			switch ($tmp[0]) {
 			case 'POST':
 				$this->{$pname} = isset( $_POST[$tmp[1]] ) ? $_POST[$tmp[1]] : null;
@@ -751,7 +773,7 @@ class SASUA_Canteens_Web extends SASUA_Canteens_Object
 				$this->{$pname} = isset( $_GET[$tmp[1]] ) ? $_GET[$tmp[1]] : null;
 				break;
 			default:
-				throw new Exception( "Invalid variable container '{$tmp[0]}'" );
+				throw new Exception( "Invalid method for retrieving variable '{$tmp[0]}'" );
 			}
 		}
 		
@@ -760,7 +782,7 @@ class SASUA_Canteens_Web extends SASUA_Canteens_Object
 		if ($autoRender) {
 			$this->render();
 		}
-	}
+	} // __construct }}}
 
 
 	public function render( $zone = null, $type = null, $format = null )
@@ -772,7 +794,7 @@ class SASUA_Canteens_Web extends SASUA_Canteens_Object
 			$this->type = $type;
 		}
 		if ($format !== null) {
-			$this->format = $format;
+			$this->format = strtolower( $format );
 		}
 		
 		switch ($this->type) {
@@ -791,11 +813,20 @@ class SASUA_Canteens_Web extends SASUA_Canteens_Object
 			
 			$output = $this->app->get( $this->zone, $this->type, $this->format );
 		} catch ( InvalidRequestException $e ) {
-			$errorMsg = 'Missing or invalid parameters';
+			$err = array( 
+				'msg' => 'Missing or invalid parameters', 
+				'code' => 1 
+			);
 		} catch ( HTTPFetchException $e ) {
-			$errorMsg = 'An error has occured contacting third party service';
+			$err = array( 
+				'msg' => 'An error has occured contacting third party service', 
+				'code' => 2 
+			);
 		} catch ( Exception $e ) {
-			$errorMsg = 'An error has occured';
+			$err = array( 
+				'msg' => 'An error has occured', 
+				'code' => 3 
+			);
 		}
 		
 		if (empty( $this->format )) {
@@ -803,33 +834,242 @@ class SASUA_Canteens_Web extends SASUA_Canteens_Object
 		}
 		
 		if (isset( $e ) && $e instanceof Exception) {
-			$menus = is_object( $this->app->menus ) ? $this->app->menus : new SASUA_Canteens_Menus( $this->zone, $this->type );
-			switch ($this->format) {
-			default:
-			case 'xml':
-				$menus = SASUA_Canteens_Utility::XMLObj( $menus->asXML( false ) );
-				$menus->addChild( 'error', $errorMsg );
-				$output = $menus->document();
-				break;
-			case 'json':
-				$menus = $this->app->menus->asObj();
-				$menus->error = $errorMsg;
-				$output = json_encode( $menus );
-				break;
-			case 'phps':
-				$menus = $this->app->menus->asObj();
-				$menus->error = $errorMsg;
-				$output = serialize( $menus );
-				break;
-			}
+			$output = $this->exception( $err, $this->format );
 		}
 		
 		$ctype = ! empty( $this->formats[$this->format] ) ? $this->formats[$this->format] : 'application/octet-stream';
 		$charset = strtolower( $this->app->getOutputEncoding() );
 		header( "Content-Type: $ctype;charset=$charset" );
 		echo $output;
-	}
-}
+	} // render }}}
+
+
+	public function exception( $err, $format )
+	{
+		$exception = null;
+		
+		$default = array( 
+			'msg' => null, 
+			'code' => null 
+		);
+		
+		if (is_string( $err )) {
+			$err = array( 
+				'msg' => $err, 
+				'code' => null 
+			);
+		} elseif (is_array( $err )) {
+			$err = array_merge( $default, $err );
+		} else {
+			throw new InvalidArgumentException( '$err must be a string or array' );
+		}
+		
+		$obj = is_object( $this->app->menus ) ? $this->app->menus : new SASUA_Canteens_Menus( $this->zone, $this->type );
+		
+		switch ($format) {
+		default:
+		case 'xml':
+			$obj = SASUA_Canteens_Utility::XMLObj( $obj->asXML( false ) );
+			$obj->addChild( 'error' );
+			$obj->error->addAttribute( 'msg', $err['msg'] );
+			$obj->error->addAttribute( 'code', $err['code'] );
+			$exception = $obj->document();
+			break;
+		case 'json':
+		case 'phps':
+			$obj->error = new stdClass();
+			$obj->error->msg = $err['msg'];
+			$obj->error->code = $err['code'];
+			$exception = $obj->asFormat( $format );
+			break;
+		}
+		
+		return $exception;
+	} // exception }}}
+} // SASUA_Canteens_Web }}}
+
+
+/**
+ * Cache class for app's specific needs
+ *
+ * @package SASUA_Canteens
+ * @subpackage SASUA_Canteens::Cache
+ */
+class SASUA_Canteens_Cache extends SASUA_Canteens_Object
+{
+	public static $config;
+	public static $active = false;
+	public static $defaults = array( 
+		'active' => false, 
+		'path' => '', 
+		'prefix' => '', 
+		'extension' => '', 
+		'filemod' => 0666, 
+		'separator' => '-', 
+		'hash' => true 
+	);
+	
+	private static $__gcLifetime = 86400;
+	private static $__gcProbability = 10;
+	private static $__gcDivisor = 100;
+
+
+	public static function key( $params = array() )
+	{
+		return new SASUA_Canteens_Cache_Key( $params, self::$config );
+	} // key }}}
+
+
+	public static function write( $key, $data, $writeIfEmpty = false )
+	{
+		if (! self::$active || (! $writeIfEmpty && empty( $data ))) {
+			return false;
+		}
+		
+		if (($data = @serialize( $data )) === false) {
+			return false;
+		}
+		
+		$cfile = self::$config['path'] . DIRECTORY_SEPARATOR . $key;
+		$status = (@file_put_contents( $cfile, $data ) !== false);
+		if (! empty( self::$config['filemod'] )) {
+			@chmod( $cfile, self::$config['filemod'] );
+		}
+		return $status;
+	} // write }}}
+
+
+	public static function read( $key )
+	{
+		if (! self::$active) {
+			return false;
+		}
+		
+		$cdata = false;
+		$cfile = self::$config['path'] . DIRECTORY_SEPARATOR . $key;
+		if (($content = @file_get_contents( $cfile )) !== false) {
+			$cdata = @unserialize( $content );
+		}
+		return $cdata;
+	} // read }}}
+
+
+	public static function config( $config )
+	{
+		if (! is_array( $config )) {
+			$config = array( 
+				$config 
+			);
+		}
+		
+		if (! empty( $config[0] ) && $config[0] instanceof SimpleXMLElement) {
+			$tmp = array();
+			foreach ( $config as $c ) {
+				$tmp[(string) $c->attributes()->name] = (string) $c;
+			}
+			$config = $tmp;
+			unset( $tmp );
+		}
+		
+		$config = array_merge( self::$defaults, $config );
+		$config['active'] = (strtolower( $config['active'] ) === 'true' || $config['active'] === '1' || $config['active'] === true);
+		$config['filemod'] = is_string( $config['filemod'] ) ? octdec( $config['filemod'] ) : $config['filemod'];
+		$config['hash'] = ($config['hash'] && strtolower( $config['hash'] ) !== 'false' && $config['hash'] !== '0');
+		
+		if (! empty( $config['path'] )) {
+			if ($config['path'][0] !== DIRECTORY_SEPARATOR) {
+				$config['path'] = realpath( dirname( __FILE__ ) ) . DIRECTORY_SEPARATOR . $config['path'];
+			}
+			$config['path'] = rtrim( $config['path'], DIRECTORY_SEPARATOR );
+			
+			if (! is_dir( $config['path'] )) {
+				$mask = umask( 0 );
+				if (false === @mkdir( $config['path'], 0777 )) {
+					throw new Exception( "Could not create cache directory '{$config['path']}'" );
+				}
+				umask( $mask );
+			}
+			
+			self::$config = $config;
+			self::$active = true;
+		}
+	} // config }}}
+
+
+	public static function gc()
+	{
+		if (self::$active && mt_rand( 1, self::$__gcDivisor ) <= self::$__gcProbability) {
+			foreach ( glob( self::$config['path'] . DIRECTORY_SEPARATOR . '*' ) as $file ) {
+				$fmtime = filemtime( $file );
+				if ($fmtime && ($fmtime + self::$__gcLifetime <= time())) {
+					@unlink( $file );
+				}
+			}
+		}
+	} // gc }}}
+} // SASUA_Canteens_Cache }}}
+
+
+/**
+ * Hold cache key generation login
+ * Default behaviour is to append today's date making the cache last until midnight of that day
+ * 
+ */
+class SASUA_Canteens_Cache_Key
+{
+	public $key;
+	public $config = array( 
+		'prefix' => '', 
+		'extension' => '', 
+		'separator' => '-', 
+		'append_date' => true, 
+		'hash' => true 
+	);
+
+
+	public function __construct( $params = array(), $config = array() )
+	{
+		if (empty( $params )) {
+			throw new InvalidArgumentException( 'Invalid or missing params for generating key' );
+		}
+		if (! is_array( $params )) {
+			$params = array( 
+				$params 
+			);
+		}
+		$this->config = array_merge( $this->config, $config );
+		if (empty( $this->config['separator'] )) {
+			throw new InvalidArgumentException( 'Key separator cannot be empty' );
+		}
+		
+		$key = $this->config['prefix'];
+		$key .= $this->config['hash'] ? md5( implode( $this->config['separator'], $params ) ) : implode( $this->config['separator'], $params );
+		$key .= $this->config['append_date'] ? date( 'dmY' ) : '';
+		$key .= ! empty( $this->config['extension'] ) ? '.' . $this->config['extension'] : '';
+		
+		$this->key = $key;
+		return $this;
+	} // __construct }}}
+
+
+	public function __toString()
+	{
+		return $this->key;
+	} // __toString }}}
+
+
+	public function write( $data, $writeIfEmpty = false )
+	{
+		return SASUA_Canteens_Cache::write( $this->key, $data, $writeIfEmpty );
+	} // write }}}
+
+
+	public function read()
+	{
+		return SASUA_Canteens_Cache::read( $this->key );
+	} // read }}}
+} // SASUA_Canteens_Cache_Key }}}
+
 
 /**
  * Base abstract class
@@ -838,7 +1078,8 @@ class SASUA_Canteens_Web extends SASUA_Canteens_Object
  */
 abstract class SASUA_Canteens_Object
 {
-}
+} // SASUA_Canteens_Object }}}
+
 
 ######################################################################################################
 ######################################################################################################
@@ -887,7 +1128,7 @@ class SASUA_Canteens_Utility
 		);
 		
 		return str_ireplace( $search, $replace, $month );
-	}
+	} // translateMonthPT2EN }}}
 
 
 	public static function DOMinnerHTML( $node )
@@ -902,7 +1143,7 @@ class SASUA_Canteens_Utility
 		}
 		
 		return $innerHTML;
-	}
+	} // DOMinnerHTML }}}
 
 
 	public static function convertEncoding( $fromEncoding, $toEncoding, $content )
@@ -914,15 +1155,15 @@ class SASUA_Canteens_Utility
 			$content = iconv( $fromEncoding, $toEncoding, $content );
 		}
 		return $content;
-	}
+	} // convertEncoding }}}
 
 
 	public static function hexDump( $data, $newline = "\n" )
 	{
 		static $from = '';
 		static $to = '';
-		static $width = 16; # number of bytes per line
-		static $pad = '.'; # padding for non-visible characters
+		static $width = 16; // number of bytes per line
+		static $pad = '.'; // padding for non-visible characters
 		
 
 		if ($from === '') {
@@ -948,11 +1189,24 @@ class SASUA_Canteens_Utility
 		if (! is_string( $xml )) {
 			throw new InvalidArgumentException( '$xml must be a string' );
 		}
-
+		
 		$xml = ($xml[0] !== '<') ? "<$xml></$xml>" : $xml;
 		return new SimpleXMLElementXT( $xml, LIBXML_NOXMLDECL );
-	}
-}
+	} // XMLObj }}}
+
+
+	public static function toJSON( $obj )
+	{
+		return json_encode( $obj );
+	} // toJSON }}}
+
+
+	public static function toPHPS( $obj )
+	{
+		return serialize( $obj );
+	} // toPHPS }}}
+} // SASUA_Canteens_Utility }}}
+
 
 ######################################################################################################
 ######################################################################################################
@@ -977,7 +1231,7 @@ class SASUA_Canteens_Menus extends SASUA_Canteens_Menu_Object
 		parent::__construct();
 		$this->zone = $zone;
 		$this->type = $type;
-	}
+	} // __construct }}}
 
 
 	public function add( $canteen, $meal, $date )
@@ -985,7 +1239,7 @@ class SASUA_Canteens_Menus extends SASUA_Canteens_Menu_Object
 		$child = new SASUA_Canteens_Menu( $this, $canteen, $meal, $date );
 		$this->children[] = $child;
 		return $child;
-	}
+	} // add }}}
 
 
 	public function asXML( $xmlDecl = false, $encoding = 'utf-8' )
@@ -1005,7 +1259,7 @@ class SASUA_Canteens_Menus extends SASUA_Canteens_Menu_Object
 			'xml_declaration' => $xmlDecl, 
 			'encoding' => $encoding 
 		) );
-	}
+	} // asXML }}}
 
 
 	public function asObj()
@@ -1019,8 +1273,9 @@ class SASUA_Canteens_Menus extends SASUA_Canteens_Menu_Object
 		}
 		
 		return $obj;
-	}
-}
+	} // asObj }}}
+} // SASUA_Canteens_Menus }}}
+
 
 /**
  * Auxiliary class for building canteen menus
@@ -1055,7 +1310,7 @@ class SASUA_Canteens_Menu extends SASUA_Canteens_Menu_Object
 		$tmp = strtotime( $date );
 		$this->weekday = date( 'l', $tmp );
 		$this->weekdayNr = date( 'w', $tmp );
-	}
+	} // __construct }}}
 
 
 	public function add( $name, $content )
@@ -1063,16 +1318,16 @@ class SASUA_Canteens_Menu extends SASUA_Canteens_Menu_Object
 		$child = new SASUA_Canteens_Menu_Item( $this, $name, $content );
 		$this->children[] = $child;
 		return $child;
-	}
+	} // add }}}
 
 
 	public function disable( $reason = null )
 	{
-		if (empty( $reason )) {
+		if (empty( $reason ) && $reason !== 0) {
 			$reason = 1;
 		}
 		$this->disabled = $reason;
-	}
+	} // disable }}}
 
 
 	public function asXML( $xmlDecl = false, $encoding = 'utf-8' )
@@ -1084,7 +1339,7 @@ class SASUA_Canteens_Menu extends SASUA_Canteens_Menu_Object
 			}
 		}
 		
-		$xml = "<{$this->tag}><{$this->tagItems}>$xml</{$this->tagItems}></{$this->tag}>";	
+		$xml = "<{$this->tag}><{$this->tagItems}>$xml</{$this->tagItems}></{$this->tag}>";
 		$xmlObj = SASUA_Canteens_Utility::XMLObj( $xml );
 		
 		$xmlObj->addAttribute( 'canteen', $this->canteen );
@@ -1098,7 +1353,7 @@ class SASUA_Canteens_Menu extends SASUA_Canteens_Menu_Object
 			'xml_declaration' => $xmlDecl, 
 			'encoding' => $encoding 
 		) );
-	}
+	} // asXML }}}
 
 
 	public function asObj()
@@ -1117,7 +1372,7 @@ class SASUA_Canteens_Menu extends SASUA_Canteens_Menu_Object
 			}
 		}
 		return $obj;
-	}
+	} // asObj }}}
 }
 
 /**
@@ -1139,7 +1394,7 @@ class SASUA_Canteens_Menu_Item extends SASUA_Canteens_Menu_Object
 		parent::__construct( $parent );
 		$this->name = $name;
 		$this->content = $content;
-	}
+	} // __construct }}}
 
 
 	public function asXML( $xmlDecl = false, $encoding = 'utf-8' )
@@ -1152,7 +1407,7 @@ class SASUA_Canteens_Menu_Item extends SASUA_Canteens_Menu_Object
 			'xml_declaration' => $xmlDecl, 
 			'encoding' => $encoding 
 		) );
-	}
+	} // asXML }}}
 
 
 	public function asObj()
@@ -1162,8 +1417,9 @@ class SASUA_Canteens_Menu_Item extends SASUA_Canteens_Menu_Object
 		$obj->content = $this->content;
 		
 		return $obj;
-	}
-}
+	} // asObj }}}
+} // SASUA_Canteens_Menu_Item }}}
+
 
 /**
  * Base abstract class for all menu building classes
@@ -1184,7 +1440,7 @@ abstract class SASUA_Canteens_Menu_Object
 			throw new Exception( 'tag property cannot be empty' );
 		}
 		$this->parent = $parent;
-	}
+	} // __construct }}}
 
 
 	abstract public function asXML( $xmlDecl = false, $encoding = 'utf-8' );
@@ -1193,20 +1449,35 @@ abstract class SASUA_Canteens_Menu_Object
 	public function asObj()
 	{
 		return new stdClass();
-	}
+	} // asObj }}}
 
 
 	public function asJSON()
 	{
-		return json_encode( $this->asObj() );
-	}
+		return SASUA_Canteens_Utility::toJSON( $this->asObj() );
+	} // asJSON }}}
 
 
 	public function asPHPS()
 	{
-		return serialize( $this->asObj() );
-	}
-}
+		return SASUA_Canteens_Utility::toPHPS( $this->asObj() );
+	} // asPHPS }}}
+
+
+	public function asFormat( $format )
+	{
+		switch (strtolower( $fomat )) {
+		default:
+		case 'xml':
+			return $this->asXML();
+		case 'json':
+			return $this->asJSON();
+		case 'phps':
+			return $this->asPHPS();
+		}
+	} // asFormat }}}
+} // SASUA_Canteens_Menu_Object }}}
+
 
 ######################################################################################################
 ######################################################################################################
@@ -1217,15 +1488,18 @@ abstract class SASUA_Canteens_Menu_Object
  */
 class HTTPFetchException extends Exception
 {
-}
+} // HTTPFetchException }}}
+
 
 class PHPMissingRequirementException extends Exception
 {
-}
+} // PHPMissingRequirementException }}}
+
 
 class InvalidRequestException extends Exception
 {
-}
+} // InvalidRequestException }}}
+
 
 ######################################################################################################
 ######################################################################################################
@@ -1240,6 +1514,13 @@ class SimpleXMLElementXT extends SimpleXMLElement
 {
 
 
+	/**
+	 * Enter description here ...
+	 * 
+	 *  @param	string $filename	optional
+	 *  @param	array $options		optional
+	 *  @return	string|bool
+	 */
 	public function document( $filename = null, $options = array() )
 	{
 		extract( $options, EXTR_SKIP );
@@ -1256,6 +1537,7 @@ class SimpleXMLElementXT extends SimpleXMLElement
 		}
 		return $filename !== null ? @file_put_contents( $filename, $doc ) !== false : $doc;
 	}
-}
+} // SimpleXMLElementXT }}}
+
 
 ?>
