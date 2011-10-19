@@ -43,6 +43,13 @@ class SASUA_Canteens extends SASUA_Canteens_Object
 		'week' 
 	);
 	
+	public $curlOptions = array(
+		'user_agent' => '%NAME% >> %TITLE% v%VERSION%', 
+		'connect_timeout' => 30, 
+		'timeout' => 30, 
+		'proxy' => '' 
+	);
+	
 	private $__curl;
 	private $__dom;
 	private $__xpath;
@@ -114,6 +121,26 @@ class SASUA_Canteens extends SASUA_Canteens_Object
 			}
 		}
 		
+		$curlOpts = array();
+		foreach ( $this->config->curl->param as $opt ) {
+			$curlOpts[(string) $opt->attributes()->name] = (string) $opt;
+		}
+		
+		$this->curlOptions = array_merge( $this->curlOptions, $curlOpts );
+		unset( $curlOpts );
+		
+		$s = array( 
+			'%TITLE%', 
+			'%NAME%', 
+			'%VERSION%'
+		);
+		$r = array( 
+			$this->title,
+			$this->name,
+			$this->version
+		);
+		$this->curlOptions['user_agent'] = str_replace( $s, $r, $this->curlOptions['user_agent'] );	
+		
 		$cacheCfg = $config->xpath( '/config/cache/param' );
 		if (! empty( $cacheCfg ) && is_array( $cacheCfg )) {
 			SASUA_Canteens_Cache::config( $cacheCfg );
@@ -184,9 +211,8 @@ class SASUA_Canteens extends SASUA_Canteens_Object
 		
 		$outputEncoding = $this->getOutputEncoding();
 
-		$contentPt = &$content;
 		if (! empty( $inputEncoding )) {
-			SASUA_Canteens_Utility::convertEncoding( $inputEncoding, $outputEncoding, $contentPt );
+			$content = SASUA_Canteens_Utility::convertEncoding( $inputEncoding, $outputEncoding, $content );
 		} else {
 			trigger_error( 'Failed to detect website encoding, encoding conversion skipped', E_USER_NOTICE );
 		}
@@ -226,9 +252,9 @@ class SASUA_Canteens extends SASUA_Canteens_Object
 		$this->type = $type;
 		$this->menus = new SASUA_Canteens_Menus( $this->zone, $this->type );
 		$this->zoneIndex = array_search( $zone, $this->zones );
-		
-		if (($url = $this->getUrl( $this->zone, $this->type )) === null) {
-			throw new Exception( "Can't find url matching params, zone: '{$this->zone}', type: '{$this->type}'" );
+		$this->url = $this->getUrl( $this->zone, $this->type );
+		if (empty( $this->url )) {
+			throw new InvalidArgumentException( "Missing or no url matching params, zone: '{$this->zone}', type: '{$this->type}'" );
 		}
 		$this->url = $url;
 	}
@@ -461,26 +487,13 @@ class SASUA_Canteens extends SASUA_Canteens_Object
 			$this->__curl = curl_init();
 		}
 		
-		$curlDefaults = array( 
-			'user_agent' => $this->title . ' >> canteen menu fetcher v' . $this->version, 
-			'connect_timeout' => 30, 
-			'timeout' => 30, 
-			'proxy' => '' 
-		);
-		$curlOptions = array();
-		foreach ( $this->config->curl->param as $opt ) {
-			$curlOptions[(string) $opt->attributes()->name] = (string) $opt;
-		}
-		
-		$curlOptions = array_merge( $curlDefaults, $curlOptions );
-		
 		//curl_setopt( $this->__curl, CURLOPT_VERBOSE, true );
 		curl_setopt( $this->__curl, CURLOPT_URL, $url );
 		curl_setopt( $this->__curl, CURLOPT_RETURNTRANSFER, true );
-		curl_setopt( $this->__curl, CURLOPT_USERAGENT, $curlOptions['user_agent'] );
-		curl_setopt( $this->__curl, CURLOPT_CONNECTTIMEOUT, $curlOptions['connect_timeout'] );
-		curl_setopt( $this->__curl, CURLOPT_TIMEOUT, $curlOptions['timeout'] );
-		curl_setopt( $this->__curl, CURLOPT_PROXY, $curlOptions['proxy'] );
+		curl_setopt( $this->__curl, CURLOPT_USERAGENT, $this->curlOptions['user_agent'] );
+		curl_setopt( $this->__curl, CURLOPT_CONNECTTIMEOUT, $this->curlOptions['connect_timeout'] );
+		curl_setopt( $this->__curl, CURLOPT_TIMEOUT, $this->curlOptions['timeout'] );
+		curl_setopt( $this->__curl, CURLOPT_PROXY, $this->curlOptions['proxy'] );
 		$content = curl_exec( $this->__curl );
 		
 		if ($content === false || curl_getinfo( $this->__curl, CURLINFO_HTTP_CODE ) !== 200) {
@@ -1121,7 +1134,7 @@ class SASUA_Canteens_Menu_Item extends SASUA_Canteens_Menu_Object
 
 	public function __construct( $parent = null, $name, $content )
 	{
-		parent::__construct();
+		parent::__construct( $parent );
 		$this->name = $name;
 		$this->content = $content;
 	}
