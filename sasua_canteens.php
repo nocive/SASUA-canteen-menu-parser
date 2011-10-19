@@ -143,8 +143,8 @@ class SASUA_Canteens extends SASUA_Canteens_Object
 	/**
 	 * Enter description here ...
 	 * 
-	 * @param	string $cfgFilename					optional
-	 * @param	bool $cfgLoad						optional
+	 * @param	string $cfgFilename			optional
+	 * @param	bool $cfgLoad				optional
 	 * @throws	PHPMissingRequirementException
 	 * @return	void
 	 */
@@ -1011,8 +1011,8 @@ class SASUA_Canteens_Cache extends SASUA_Canteens_Object
 
 
 /**
- * Hold cache key generation login
- * Default behaviour is to append today's date making the cache last until midnight of that day
+ * Hold cache key generation logic
+ * Default behaviour is to append today's date making the cache last while the day lasts
  * 
  */
 class SASUA_Canteens_Cache_Key
@@ -1466,7 +1466,7 @@ abstract class SASUA_Canteens_Menu_Object
 
 	public function asFormat( $format )
 	{
-		switch (strtolower( $fomat )) {
+		switch (strtolower( $format )) {
 		default:
 		case 'xml':
 			return $this->asXML();
