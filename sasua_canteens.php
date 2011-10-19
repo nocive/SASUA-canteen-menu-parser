@@ -149,8 +149,8 @@ class SASUA_Canteens extends SASUA_Canteens_Object
 	/**
 	 * Constructor, checks PHP requirements and loads config if requested
 	 * 
-	 * @param	string $cfgFilename					optional
-	 * @param	bool $cfgLoad						optional
+	 * @param	string $cfgFilename			optional
+	 * @param	bool $cfgLoad				optional
 	 * @throws	PHPMissingRequirementException
 	 * @return	void
 	 */
@@ -1131,7 +1131,7 @@ class SASUA_Canteens_Cache extends SASUA_Canteens_Object
 
 /**
  * Hold cache key generation logic
- * Default behaviour is to append today's date making the cache last until midnight of that day
+ * Default behaviour is to append today's date making the cache last while the day lasts
  * 
  * @package SASUA_Canteens
  * @subpackage SASUA_Canteens::Cache
@@ -1634,6 +1634,20 @@ abstract class SASUA_Canteens_Menu_Object
 	{
 		return SASUA_Canteens_Utility::toPHPS( $this->asObj() );
 	} // asPHPS }}}
+
+
+	public function asFormat( $format )
+	{
+		switch (strtolower( $format )) {
+		default:
+		case 'xml':
+			return $this->asXML();
+		case 'json':
+			return $this->asJSON();
+		case 'phps':
+			return $this->asPHPS();
+		}
+	} // asFormat }}}
 } // SASUA_Canteens_Menu_Object }}}
 
 
