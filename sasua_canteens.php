@@ -142,7 +142,8 @@ class SASUA_Canteens extends SASUA_Canteens_Object
 	private $__dependencies = array( 
 		'dom', 
 		'tidy', 
-		'simplexml' 
+		'simplexml',
+		'iconv'
 	);
 
 
@@ -834,7 +835,7 @@ class SASUA_Canteens_Web extends SASUA_Canteens_Object
 				$this->{$pname} = isset( $_GET[$tmp[1]] ) ? $_GET[$tmp[1]] : null;
 				break;
 			default:
-				throw new Exception( "Invalid method for retrieving variable '{$tmp[0]}'" );
+				throw new Exception( "Invalid method for variable retrieval '{$tmp[0]}'" );
 			}
 		}
 		
@@ -903,7 +904,7 @@ class SASUA_Canteens_Web extends SASUA_Canteens_Object
 		}
 		
 		if (isset( $e ) && $e instanceof Exception) {
-			$output = (string) $this->exception( $err, $this->format );
+			$output = (string) $this->error( $err, $this->format );
 		}
 		
 		if ($echo) {
@@ -918,13 +919,13 @@ class SASUA_Canteens_Web extends SASUA_Canteens_Object
 
 
 	/**
-	 * Builds an exception for display
+	 * Builds an error for display
 	 * 
 	 * @param 	array $err
 	 * @param 	string $format
 	 * @return 	string
 	 */
-	public function exception( $err, $format )
+	public function error( $err, $format )
 	{
 		$exception = null;
 		
@@ -945,7 +946,7 @@ class SASUA_Canteens_Web extends SASUA_Canteens_Object
 		}
 		
 		return new SASUA_Canteens_Web_Error( $err['msg'], $err['code'], $format );
-	} // exception }}}
+	} // error }}}
 } // SASUA_Canteens_Web }}}
 
 
