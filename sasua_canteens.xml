@@ -1,6 +1,6 @@
 <!--
 SASUA_Canteens XML config
-version 1.2
+version 1.3
 -->
 <config>
         <url>http://www2.sas.ua.pt/site/temp/</url>
@@ -20,7 +20,7 @@ version 1.2
         </cache>
 
         <curl>
-                <param name="user_agent">Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/535.1 (KHTML, like Gecko) Chrome/14.0.835.202 Safari/535.1</param>
+		<param name="user_agent">Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/535.1 (KHTML, like Gecko) Chrome/14.0.835.202 Safari/535.1</param>
                 <param name="connect_timeout">30</param>
                 <param name="timeout">30</param>
                 <param name="proxy"></param>

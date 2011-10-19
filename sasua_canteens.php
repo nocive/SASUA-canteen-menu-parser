@@ -8,7 +8,7 @@
  *
  * @package     SASUA_Canteens
  * @author      Jose' Pedro Saraiva <jose.pedro at ua.pt>
- * @version     1.2
+ * @version     1.3
  *
  * @description
  * Crawls SAS/UA pages and extracts all canteen menu info, displaying
@@ -41,13 +41,19 @@ class SASUA_Canteens extends SASUA_Canteens_Object
 	 * @var		string
 	 * @access	public
 	 */
-	public $version = '1.2';
+	public $version = '1.3';
 	
 	/**
 	 * @var		SimpleXMLElement
 	 * @access	public
 	 */
 	public $config;
+	
+	/**
+	 * @var		string
+	 * @access	public
+	 */
+	public $configFile;
 	
 	/**
 	 * @var		SASUA_Canteens_Menus
@@ -141,7 +147,7 @@ class SASUA_Canteens extends SASUA_Canteens_Object
 
 
 	/**
-	 * Enter description here ...
+	 * Constructor, checks PHP requirements and loads config if requested
 	 * 
 	 * @param	string $cfgFilename					optional
 	 * @param	bool $cfgLoad						optional
@@ -150,6 +156,8 @@ class SASUA_Canteens extends SASUA_Canteens_Object
 	 */
 	public function __construct( $cfgFilename = null, $cfgLoad = true )
 	{
+		self::instance( $this );
+		
 		foreach ( $this->__dependencies as $dep ) {
 			if (! extension_loaded( $dep )) {
 				throw new PHPMissingRequirementException( "Required PHP extension '$dep' is not loaded" );
@@ -166,7 +174,7 @@ class SASUA_Canteens extends SASUA_Canteens_Object
 
 
 	/**
-	 * Enter description here ...
+	 * Destructor
 	 * 
 	 * @return	void
 	 */
@@ -179,7 +187,29 @@ class SASUA_Canteens extends SASUA_Canteens_Object
 
 
 	/**
-	 * Enter description here ...
+	 * Gets or sets a singleton instance
+	 * 
+	 * @param	SASUA_Canteens $setInstance		optional
+	 * @return	SASUA_Canteens
+	 */
+	public static function instance( $setInstance = null )
+	{
+		static $instance;
+		
+		if ($setInstance) {
+			$instance = $setInstance;
+		}
+		
+		if (! $instance) {
+			$c = __CLASS__;
+			$instance = new $c();
+		}
+		return $instance;
+	} // instance }}}
+
+
+	/**
+	 * Loads and checks config file and it's dependencies
 	 * 
 	 * @param	string $filename
 	 * @throws	Exception
@@ -252,6 +282,7 @@ class SASUA_Canteens extends SASUA_Canteens_Object
 		}
 		
 		$this->config = $config;
+		$this->configFile = $filename;
 		$this->zones = $zones;
 		
 		return $this->config;
@@ -259,13 +290,13 @@ class SASUA_Canteens extends SASUA_Canteens_Object
 
 
 	/**
-	 * Enter description here ...
+	 * Retrieve menus in specified format
 	 *
 	 * @param	string $zone
 	 * @param	string $type
 	 * @param	string $format	optional
 	 * @param	bool $cached	optional
-	 * @return	string
+	 * @return	mixed			object for object format, string for all the rest
 	 */
 	public function get( $zone, $type, $format = 'xml', $cached = true )
 	{
@@ -300,7 +331,7 @@ class SASUA_Canteens extends SASUA_Canteens_Object
 
 
 	/**
-	 * Enter description here ...
+	 * Fetches, loads and parses menus
 	 * 
 	 * @param	string $zone	optional
 	 * @param	string $type	optional
@@ -340,7 +371,7 @@ class SASUA_Canteens extends SASUA_Canteens_Object
 
 
 	/**
-	 * Enter description here ...
+	 * Get url for specified zone and type
 	 * 
 	 * @param	string $zone
 	 * @param	string $type
@@ -354,7 +385,7 @@ class SASUA_Canteens extends SASUA_Canteens_Object
 
 
 	/**
-	 * Enter description here ...
+	 * Get input encoding
 	 * 
 	 * @return	string
 	 */
@@ -365,7 +396,7 @@ class SASUA_Canteens extends SASUA_Canteens_Object
 
 
 	/**
-	 * Enter description here ...
+	 * Get output encoding
 	 * 
 	 * @return	string
 	 */
@@ -376,7 +407,7 @@ class SASUA_Canteens extends SASUA_Canteens_Object
 
 
 	/**
-	 * Enter description here ...
+	 * Internal init logic
 	 * 
 	 * @param	string $zone
 	 * @param	string $type
@@ -402,7 +433,7 @@ class SASUA_Canteens extends SASUA_Canteens_Object
 
 
 	/**
-	 * Enter description here ...
+	 * Reset class properties
 	 * 
 	 * @return	void
 	 */
@@ -417,7 +448,7 @@ class SASUA_Canteens extends SASUA_Canteens_Object
 
 
 	/**
-	 * Enter description here ...
+	 * Parse wrapper, calls specific parser by type
 	 * 
 	 * @return	void
 	 */
@@ -437,7 +468,7 @@ class SASUA_Canteens extends SASUA_Canteens_Object
 
 
 	/**
-	 * Enter description here ...
+	 * Parser for daily menus
 	 * 
 	 * @return	void
 	 */
@@ -459,8 +490,8 @@ class SASUA_Canteens extends SASUA_Canteens_Object
 			for ($i = $rowsOffset, $m = - 1, $filter = false; $i < $rows->length; $i ++) {
 				$row = $rows->item( $i );
 				
-				// check if item is a meal header, and filter all empty entries after it
 				$isMenuHeader = eval( $menuHeaderFilter );
+				// check if item is a meal header, and filter all empty entries after it until we find a non empty entry
 				if ($isMenuHeader) {
 					$m ++;
 					if ($skipRows > 0) {
@@ -485,7 +516,7 @@ class SASUA_Canteens extends SASUA_Canteens_Object
 
 
 	/**
-	 * Enter description here ...
+	 * Parser for weekly menus
 	 * 
 	 * @return	void
 	 */
@@ -503,8 +534,8 @@ class SASUA_Canteens extends SASUA_Canteens_Object
 			for ($i = $rowsOffset, $m = - 1, $filter = false; $i < $rows->length; $i ++) {
 				$row = $rows->item( $i );
 				
-				// check if item is a meal header, and filter all empty entries after it
 				$isMenuHeader = eval( $menuHeaderFilter );
+				// check if item is a meal header, and filter all empty entries after it until we find a non empty entry
 				if ($isMenuHeader) {
 					$dateParser = $this->__getParserParam( 'date_regex', $this->type, $this->zone, false, false );
 					$dates[] = $this->__parseDate( $this->__sanitize( $row->nodeValue ), (string) $dateParser[0], $dateParser->attributes()->format );
@@ -533,7 +564,7 @@ class SASUA_Canteens extends SASUA_Canteens_Object
 
 
 	/**
-	 * Enter description here ...
+	 * Get parser parameter from config
 	 * 
 	 * @param	string $name
 	 * @param	string $tyhpe
@@ -541,7 +572,7 @@ class SASUA_Canteens extends SASUA_Canteens_Object
 	 * @param	bool $eval		optional
 	 * @param	bool $flatten	optional
 	 * @throws 	Exception
-	 * @return	mixed
+	 * @return	mixed			string if either eval or flatten is true, SimpleXMLElement otherwise
 	 */
 	private function __getParserParam( $name, $type, $zone = null, $eval = false, $flatten = true )
 	{
@@ -568,7 +599,7 @@ class SASUA_Canteens extends SASUA_Canteens_Object
 
 
 	/**
-	 * Enter description here ...
+	 * Build menu from gathered arrays by parser
 	 * 
 	 * @param	array $dates
 	 * @param	array $items
@@ -622,13 +653,13 @@ class SASUA_Canteens extends SASUA_Canteens_Object
 
 
 	/**
-	 * Enter description here ...
+	 * Parse dates in different formats
 	 * 
 	 * @param	string $date
 	 * @param	string $regex
 	 * @param	string $format
 	 * @throws	InvalidArgumentException
-	 * @return	string
+	 * @return	string						string on success, false on failure
 	 */
 	private function __parseDate( $date, $regex, $format )
 	{
@@ -725,34 +756,64 @@ class SASUA_Canteens extends SASUA_Canteens_Object
 
 
 /**
- * Helper class for displaying SASUA_Canteens information for web applications
+ * Helper class for displaying SASUA_Canteens data for web applications
  *
  * @package SASUA_Canteens
  * @package SASUA_Canteens::Web
  */
 class SASUA_Canteens_Web extends SASUA_Canteens_Object
 {
+	/**
+	 * @var 	string
+	 * @access	public
+	 */
 	public $zone;
+	
+	/**
+	 * @var 	string
+	 * @access	public
+	 */
 	public $type;
+	
+	/**
+	 * @var 	string
+	 * @access	public
+	 */
 	public $format;
 	
+	/**
+	 * @var 	array
+	 * @access	public
+	 */
 	public $params = array( 
 		'zone' => 'GET:z', 
 		'type' => 'GET:t', 
 		'format' => 'GET:f' 
 	);
 	
+	/**
+	 * @var 	array
+	 * @access	public
+	 */
 	public $formats = array( 
 		'phps' => 'application/octet-stream', 
 		'json' => 'application/json', 
 		'xml' => 'text/xml' 
 	);
 	
+	/**
+	 * @var 	SASUA_Canteens
+	 * @access	public
+	 */
 	public $app;
-	public $appConfig;
-	public $appConfigLoad = true;
 
 
+	/**
+	 * Constructor
+	 * 
+	 * @param	array $params		optional
+	 * @param	bool $autoRender	optional
+	 */
 	public function __construct( $params = null, $autoRender = true )
 	{
 		if ($params !== null) {
@@ -777,7 +838,7 @@ class SASUA_Canteens_Web extends SASUA_Canteens_Object
 			}
 		}
 		
-		$this->app = new SASUA_Canteens( $this->appConfig, $this->appConfigLoad );
+		$this->app = SASUA_Canteens::instance();
 		
 		if ($autoRender) {
 			$this->render();
@@ -785,7 +846,16 @@ class SASUA_Canteens_Web extends SASUA_Canteens_Object
 	} // __construct }}}
 
 
-	public function render( $zone = null, $type = null, $format = null )
+	/**
+	 * Renders data and sets headers for proper browser display
+	 * 
+	 * @param string $zone		optional
+	 * @param string $type		optional
+	 * @param string $format	optional
+	 * @param bool $echo		optional
+	 * @return void|string		returns string if echo is false
+	 */
+	public function render( $zone = null, $type = null, $format = null, $echo = true )
 	{
 		if ($zone !== null) {
 			$this->zone = $zone;
@@ -810,11 +880,10 @@ class SASUA_Canteens_Web extends SASUA_Canteens_Object
 			if (! in_array( $this->type, $this->app->types, true ) || ! in_array( $this->zone, $this->app->zones, true )) {
 				throw new InvalidRequestException();
 			}
-			
 			$output = $this->app->get( $this->zone, $this->type, $this->format );
 		} catch ( InvalidRequestException $e ) {
 			$err = array( 
-				'msg' => 'Missing or invalid parameters', 
+				'msg' => 'Missing or invalid request parameters (zone or type)', 
 				'code' => 1 
 			);
 		} catch ( HTTPFetchException $e ) {
@@ -834,16 +903,27 @@ class SASUA_Canteens_Web extends SASUA_Canteens_Object
 		}
 		
 		if (isset( $e ) && $e instanceof Exception) {
-			$output = $this->exception( $err, $this->format );
+			$output = (string) $this->exception( $err, $this->format );
 		}
 		
-		$ctype = ! empty( $this->formats[$this->format] ) ? $this->formats[$this->format] : 'application/octet-stream';
-		$charset = strtolower( $this->app->getOutputEncoding() );
-		header( "Content-Type: $ctype;charset=$charset" );
-		echo $output;
+		if ($echo) {
+			$ctype = ! empty( $this->formats[$this->format] ) ? $this->formats[$this->format] : 'application/octet-stream';
+			$charset = strtolower( $this->app->getOutputEncoding() );
+			header( "Content-Type: $ctype;charset=$charset" );
+			echo $output;
+		} else {
+			return $output;
+		}
 	} // render }}}
 
 
+	/**
+	 * Builds an exception for display
+	 * 
+	 * @param 	array $err
+	 * @param 	string $format
+	 * @return 	string
+	 */
 	public function exception( $err, $format )
 	{
 		$exception = null;
@@ -864,33 +944,72 @@ class SASUA_Canteens_Web extends SASUA_Canteens_Object
 			throw new InvalidArgumentException( '$err must be a string or array' );
 		}
 		
-		$obj = is_object( $this->app->menus ) ? $this->app->menus : new SASUA_Canteens_Menus( $this->zone, $this->type );
-		
-		switch ($format) {
-		default:
-		case 'xml':
-			$obj = SASUA_Canteens_Utility::XMLObj( $obj->asXML( false ) );
-			$obj->addChild( 'error' );
-			$obj->error->addAttribute( 'msg', $err['msg'] );
-			$obj->error->addAttribute( 'code', $err['code'] );
-			$exception = $obj->document();
-			break;
-		case 'json':
-		case 'phps':
-			$obj->error = new stdClass();
-			$obj->error->msg = $err['msg'];
-			$obj->error->code = $err['code'];
-			$exception = $obj->asFormat( $format );
-			break;
-		}
-		
-		return $exception;
+		return new SASUA_Canteens_Web_Error( $err['msg'], $err['code'], $format );
 	} // exception }}}
 } // SASUA_Canteens_Web }}}
 
 
 /**
- * Cache class for app's specific needs
+ * Helper class for building and displaying errors for Web class
+ * 
+ * @package SASUA_Canteens
+ * @subpackage SASUA_Canteens::Web
+ */
+class SASUA_Canteens_Web_Error
+{
+	public $rootNode = 'menus';
+	public $message;
+	public $code;
+	public $format;
+
+
+	public function __construct( $message, $code = null, $format = null )
+	{
+		$this->message = $message;
+		$this->code = $code;
+		$this->setFormat( $format );
+	} // __construct }}}
+
+
+	public function __toString()
+	{
+		switch ($this->format) {
+		case 'xml':
+			$obj = SASUA_Canteens_Utility::XMLObj( $this->rootNode );
+			$obj->addChild( 'error' );
+			$obj->error->addAttribute( 'msg', $this->message );
+			$obj->error->addAttribute( 'code', $this->code );
+			$err = $obj->document();
+			break;
+		case 'json':
+		case 'phps':
+			$obj = new stdClass();
+			$obj->error->msg = $this->message;
+			$obj->error->code = $this->code;
+			$err = $this->format === 'json' ? SASUA_Canteens_Utility::toJSON( $obj ) : SASUA_Canteens_Utility::toPHPS( $obj );
+			break;
+		}
+		return $err;
+	} // __toString }}}
+
+
+	public function setFormat( $format )
+	{
+		$format = strtolower( $format );
+		switch ($format) {
+		case 'xml':
+		case 'json':
+			$this->format = $format;
+			break;
+		default:
+			$this->format = 'xml';
+		}
+	} // setFormat }}}
+} // SASUA_Canteens_Web_Error }}}
+
+
+/**
+ * Cache class
  *
  * @package SASUA_Canteens
  * @subpackage SASUA_Canteens::Cache
@@ -985,7 +1104,7 @@ class SASUA_Canteens_Cache extends SASUA_Canteens_Object
 			if (! is_dir( $config['path'] )) {
 				$mask = umask( 0 );
 				if (false === @mkdir( $config['path'], 0777 )) {
-					throw new Exception( "Could not create cache directory '{$config['path']}'" );
+					throw new Exception( "Error creating cache directory '{$config['path']}'" );
 				}
 				umask( $mask );
 			}
@@ -1011,9 +1130,11 @@ class SASUA_Canteens_Cache extends SASUA_Canteens_Object
 
 
 /**
- * Hold cache key generation login
+ * Hold cache key generation logic
  * Default behaviour is to append today's date making the cache last until midnight of that day
  * 
+ * @package SASUA_Canteens
+ * @subpackage SASUA_Canteens::Cache
  */
 class SASUA_Canteens_Cache_Key
 {
@@ -1095,6 +1216,12 @@ class SASUA_Canteens_Utility
 {
 
 
+	/**
+	 * Translate month names from portuguese to english, so that date can be fed to strtotime
+	 * 
+	 * @param	string $month
+	 * @return	string
+	 */
 	public static function translateMonthPT2EN( $month )
 	{
 		$search = array( 
@@ -1131,6 +1258,12 @@ class SASUA_Canteens_Utility
 	} // translateMonthPT2EN }}}
 
 
+	/**
+	 * Gets the inner html of a DOMNode
+	 * 
+	 * @param 	DOMNode $node
+	 * @return 	string
+	 */
 	public static function DOMinnerHTML( $node )
 	{
 		if (! $node instanceof DOMNode) {
@@ -1146,6 +1279,14 @@ class SASUA_Canteens_Utility
 	} // DOMinnerHTML }}}
 
 
+	/**
+	 * Convert charset encoding from one encoding to another
+	 * 
+	 * @param	string $fromEncoding
+	 * @param	string $toEncoding
+	 * @param	string $content
+	 * @return	string
+	 */
 	public static function convertEncoding( $fromEncoding, $toEncoding, $content )
 	{
 		if (empty( $fromEncoding ) || empty( $toEncoding )) {
@@ -1158,6 +1299,13 @@ class SASUA_Canteens_Utility
 	} // convertEncoding }}}
 
 
+	/**
+	 * Displays an hex dump of the passes string, used for debug
+	 * 
+	 * @param	string $data
+	 * @param	string $newline
+	 * @return	void
+	 */
 	public static function hexDump( $data, $newline = "\n" )
 	{
 		static $from = '';
@@ -1184,6 +1332,12 @@ class SASUA_Canteens_Utility
 	} // hexDump }}}
 
 
+	/**
+	 * Instanciates a SimpleXMLElementXT from the supplied xml string
+	 * 
+	 * @param	string $xml
+	 * @return	SimpleXMLElementXT
+	 */
 	public static function XMLObj( $xml )
 	{
 		if (! is_string( $xml )) {
@@ -1195,12 +1349,24 @@ class SASUA_Canteens_Utility
 	} // XMLObj }}}
 
 
+	/**
+	 * Converts any given object to json
+	 * 
+	 * @param	mixed $obj
+	 * @return	string
+	 */
 	public static function toJSON( $obj )
 	{
 		return json_encode( $obj );
 	} // toJSON }}}
 
 
+	/**
+	 * Serializes any given object
+	 * 
+	 * @param	mixed $obj
+	 * @return	string
+	 */
 	public static function toPHPS( $obj )
 	{
 		return serialize( $obj );
@@ -1223,7 +1389,7 @@ class SASUA_Canteens_Menus extends SASUA_Canteens_Menu_Object
 	public $zone;
 	public $type;
 	
-	public $tag = 'menus';
+	protected $_tag = 'menus';
 
 
 	public function __construct( $zone, $type )
@@ -1237,7 +1403,7 @@ class SASUA_Canteens_Menus extends SASUA_Canteens_Menu_Object
 	public function add( $canteen, $meal, $date )
 	{
 		$child = new SASUA_Canteens_Menu( $this, $canteen, $meal, $date );
-		$this->children[] = $child;
+		$this->_children[] = $child;
 		return $child;
 	} // add }}}
 
@@ -1245,10 +1411,10 @@ class SASUA_Canteens_Menus extends SASUA_Canteens_Menu_Object
 	public function asXML( $xmlDecl = false, $encoding = 'utf-8' )
 	{
 		$xml = '';
-		foreach ( $this->children as $c ) {
+		foreach ( $this->_children as $c ) {
 			$xml .= $c->asXML();
 		}
-		$xml = "<{$this->tag}>$xml</{$this->tag}>";
+		$xml = "<{$this->_tag}>$xml</{$this->_tag}>";
 		
 		$xmlObj = SASUA_Canteens_Utility::XMLObj( $xml );
 		
@@ -1267,9 +1433,9 @@ class SASUA_Canteens_Menus extends SASUA_Canteens_Menu_Object
 		$obj = parent::asObj();
 		$obj->zone = $this->zone;
 		$obj->type = $this->type;
-		$obj->{$this->tag} = array();
-		foreach ( $this->children as $c ) {
-			$obj->{$this->tag}[] = $c->asObj();
+		$obj->{$this->_tag} = array();
+		foreach ( $this->_children as $c ) {
+			$obj->{$this->_tag}[] = $c->asObj();
 		}
 		
 		return $obj;
@@ -1281,7 +1447,7 @@ class SASUA_Canteens_Menus extends SASUA_Canteens_Menu_Object
  * Auxiliary class for building canteen menus
  *
  * @package     SASUA_Canteens
- * @subpackage  SASUA_Canteens::Menu
+ * @subpackage  SASUA_Canteens::Menus
  */
 class SASUA_Canteens_Menu extends SASUA_Canteens_Menu_Object
 {
@@ -1292,14 +1458,14 @@ class SASUA_Canteens_Menu extends SASUA_Canteens_Menu_Object
 	public $weekdayNr;
 	public $disabled = false;
 	
-	public $tag = 'menu';
-	public $tagItems = 'items';
+	public $_tag = 'menu';
+	public $_tagItems = 'items';
 
 
 	public function __construct( $parent = null, $canteen, $meal, $date )
 	{
 		parent::__construct( $parent );
-		if (empty( $this->tagItems )) {
+		if (empty( $this->_tagItems )) {
 			throw new Exception( 'tagItems property cannot be empty' );
 		}
 		
@@ -1316,7 +1482,7 @@ class SASUA_Canteens_Menu extends SASUA_Canteens_Menu_Object
 	public function add( $name, $content )
 	{
 		$child = new SASUA_Canteens_Menu_Item( $this, $name, $content );
-		$this->children[] = $child;
+		$this->_children[] = $child;
 		return $child;
 	} // add }}}
 
@@ -1334,12 +1500,12 @@ class SASUA_Canteens_Menu extends SASUA_Canteens_Menu_Object
 	{
 		$xml = '';
 		if (! $this->disabled) {
-			foreach ( $this->children as $c ) {
+			foreach ( $this->_children as $c ) {
 				$xml .= $c->asXML();
 			}
 		}
 		
-		$xml = "<{$this->tag}><{$this->tagItems}>$xml</{$this->tagItems}></{$this->tag}>";
+		$xml = "<{$this->_tag}><{$this->_tagItems}>$xml</{$this->_tagItems}></{$this->_tag}>";
 		$xmlObj = SASUA_Canteens_Utility::XMLObj( $xml );
 		
 		$xmlObj->addAttribute( 'canteen', $this->canteen );
@@ -1365,10 +1531,10 @@ class SASUA_Canteens_Menu extends SASUA_Canteens_Menu_Object
 		$obj->weekday = $this->weekday;
 		$obj->weekdayNr = $this->weekdayNr;
 		$obj->disabled = $this->disabled;
-		$obj->{$this->tagItems} = array();
+		$obj->{$this->_tagItems} = array();
 		if (! $this->disabled) {
-			foreach ( $this->children as $c ) {
-				$obj->{$this->tagItems}[] = $c->asObj();
+			foreach ( $this->_children as $c ) {
+				$obj->{$this->_tagItems}[] = $c->asObj();
 			}
 		}
 		return $obj;
@@ -1379,14 +1545,14 @@ class SASUA_Canteens_Menu extends SASUA_Canteens_Menu_Object
  * Auxiliary class for building canteen menus
  *
  * @package     SASUA_Canteens
- * @subpackage  SASUA_Canteens::Menu_Item
+ * @subpackage  SASUA_Canteens::Menus
  */
 class SASUA_Canteens_Menu_Item extends SASUA_Canteens_Menu_Object
 {
 	public $name;
 	public $content;
 	
-	public $tag = 'item';
+	protected $_tag = 'item';
 
 
 	public function __construct( $parent = null, $name, $content )
@@ -1399,7 +1565,7 @@ class SASUA_Canteens_Menu_Item extends SASUA_Canteens_Menu_Object
 
 	public function asXML( $xmlDecl = false, $encoding = 'utf-8' )
 	{
-		$xmlObj = SASUA_Canteens_Utility::XMLObj( $this->tag );
+		$xmlObj = SASUA_Canteens_Utility::XMLObj( $this->_tag );
 		$xmlObj->{0} = $this->content;
 		$xmlObj->addAttribute( 'name', $this->name );
 		
@@ -1425,25 +1591,31 @@ class SASUA_Canteens_Menu_Item extends SASUA_Canteens_Menu_Object
  * Base abstract class for all menu building classes
  *
  * @package     SASUA_Canteens
- * @subpackage  SASUA_Canteens::Menu_Object
+ * @subpackage  SASUA_Canteens::Menus
  */
 abstract class SASUA_Canteens_Menu_Object
 {
-	public $tag;
-	public $parent;
-	public $children = array();
+	protected $_tag;
+	protected $_parent;
+	protected $_children = array();
 
 
 	public function __construct( $parent = null )
 	{
-		if (empty( $this->tag )) {
+		if (empty( $this->_tag )) {
 			throw new Exception( 'tag property cannot be empty' );
 		}
-		$this->parent = $parent;
+		$this->_parent = $parent;
 	} // __construct }}}
 
 
 	abstract public function asXML( $xmlDecl = false, $encoding = 'utf-8' );
+
+
+	public function asXMLObj()
+	{
+		return SASUA_Canteens_Utility::XMLObj( $this->_tag );
+	} // asXMLObj }}}
 
 
 	public function asObj()
@@ -1462,20 +1634,6 @@ abstract class SASUA_Canteens_Menu_Object
 	{
 		return SASUA_Canteens_Utility::toPHPS( $this->asObj() );
 	} // asPHPS }}}
-
-
-	public function asFormat( $format )
-	{
-		switch (strtolower( $fomat )) {
-		default:
-		case 'xml':
-			return $this->asXML();
-		case 'json':
-			return $this->asJSON();
-		case 'phps':
-			return $this->asPHPS();
-		}
-	} // asFormat }}}
 } // SASUA_Canteens_Menu_Object }}}
 
 
@@ -1517,9 +1675,9 @@ class SimpleXMLElementXT extends SimpleXMLElement
 	/**
 	 * Enter description here ...
 	 * 
-	 *  @param	string $filename	optional
-	 *  @param	array $options		optional
-	 *  @return	string|bool
+	 * @param	string $filename	optional
+	 * @param	array $options		optional
+	 * @return	string|bool
 	 */
 	public function document( $filename = null, $options = array() )
 	{
