@@ -1300,7 +1300,7 @@ class SASUA_Canteens_Utility
 
 
 	/**
-	 * Displays an hex dump of the passes string, used for debug
+	 * Displays an hex dump of the passed string, used for debug
 	 * 
 	 * @param	string $data
 	 * @param	string $newline
