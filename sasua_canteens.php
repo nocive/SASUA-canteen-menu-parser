@@ -43,7 +43,9 @@ class SASUA_Canteens extends SASUA_Canteens_Object
 		'week' 
 	);
 	
-	public $curlOptions = array(
+	public $curlOptions = array();
+	
+	private $__curlDefaults = array(
 		'user_agent' => '%NAME% >> %TITLE% v%VERSION%', 
 		'connect_timeout' => 30, 
 		'timeout' => 30, 
@@ -125,9 +127,7 @@ class SASUA_Canteens extends SASUA_Canteens_Object
 		foreach ( $this->config->curl->param as $opt ) {
 			$curlOpts[(string) $opt->attributes()->name] = (string) $opt;
 		}
-		
-		$this->curlOptions = array_merge( $this->curlOptions, $curlOpts );
-		unset( $curlOpts );
+		$curlOpts = array_merge( $this->__curlDefaults, $curlOpts );
 		
 		$s = array( 
 			'%TITLE%', 
@@ -139,7 +139,9 @@ class SASUA_Canteens extends SASUA_Canteens_Object
 			$this->name,
 			$this->version
 		);
-		$this->curlOptions['user_agent'] = str_replace( $s, $r, $this->curlOptions['user_agent'] );	
+		$curlOpts['user_agent'] = str_replace( $s, $r, $curlOpts['user_agent'] );
+		$this->curlOptions = $curlOpts;
+		unset( $curlOpts );
 		
 		$cacheCfg = $config->xpath( '/config/cache/param' );
 		if (! empty( $cacheCfg ) && is_array( $cacheCfg )) {
