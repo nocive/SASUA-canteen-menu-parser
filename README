@@ -1,6 +1,4 @@
 TODO
 ---------------------------
-o) user agent fix, should only append version to title
-o) menu_item __construct doesnt pass parent argument to parent::__construct
 o) web class should have a way to just call asPHPS and asJSON on error obj (make it possible to pass an object to these functions )
 o) function docblocks
