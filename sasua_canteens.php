@@ -1170,7 +1170,6 @@ class SASUA_Canteens_Cache_Key
 		$key .= ! empty( $this->config['extension'] ) ? '.' . $this->config['extension'] : '';
 		
 		$this->key = $key;
-		return $this;
 	} // __construct }}}
 
 
