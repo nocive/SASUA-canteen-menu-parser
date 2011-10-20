@@ -1000,6 +1000,7 @@ class SASUA_Canteens_Web_Error
 		switch ($format) {
 		case 'xml':
 		case 'json':
+		case 'phps':
 			$this->format = $format;
 			break;
 		default:
