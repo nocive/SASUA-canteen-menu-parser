@@ -1,3 +1,4 @@
 TODO
 ---------------------------
 o) function docblocks
+o) drop all switch case's for the formats and implement it in a more clever way
