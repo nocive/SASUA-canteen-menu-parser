@@ -190,7 +190,7 @@ class SASUA_Canteens extends SASUA_Canteens_Object
 	/**
 	 * Gets or sets a singleton instance
 	 * 
-	 * @param	SASUA_Canteens $setInstance		optional
+	 * @param	SASUA_Canteens $setInstance	optional
 	 * @return	SASUA_Canteens
 	 */
 	public static function instance( $setInstance = null )
@@ -297,7 +297,7 @@ class SASUA_Canteens extends SASUA_Canteens_Object
 	 * @param	string $type
 	 * @param	string $format	optional
 	 * @param	bool $cached	optional
-	 * @return	mixed			object for object format, string for all the rest
+	 * @return	mixed		object for object format, string for all the rest
 	 */
 	public function get( $zone, $type, $format = 'xml', $cached = true )
 	{
@@ -332,7 +332,7 @@ class SASUA_Canteens extends SASUA_Canteens_Object
 
 
 	/**
-	 * Fetches, loads and parses menus
+	 * Fetches, loads and calls the parser
 	 * 
 	 * @param	string $zone	optional
 	 * @param	string $type	optional
@@ -357,7 +357,7 @@ class SASUA_Canteens extends SASUA_Canteens_Object
 		@$this->__dom->loadHTML( $content );
 		
 		$inputEncoding = $this->getInputEncoding();
-		$inputEncoding = empty( $inputEncoding ) || $inputEncoding === 'auto' ? $this->__dom->encoding : $inputEncoding;
+		$inputEncoding = empty( $inputEncoding ) || strtolower( $inputEncoding ) === 'auto' ? $this->__dom->encoding : strtolower( $inputEncoding );
 		
 		$outputEncoding = $this->getOutputEncoding();
 		
@@ -570,10 +570,10 @@ class SASUA_Canteens extends SASUA_Canteens_Object
 	 * @param	string $name
 	 * @param	string $tyhpe
 	 * @param	string $zone	optional
-	 * @param	bool $eval		optional
+	 * @param	bool $eval	optional
 	 * @param	bool $flatten	optional
 	 * @throws 	Exception
-	 * @return	mixed			string if either eval or flatten is true, SimpleXMLElement otherwise
+	 * @return	mixed		string if either eval or flatten is true, SimpleXMLElement otherwise
 	 */
 	private function __getParserParam( $name, $type, $zone = null, $eval = false, $flatten = true )
 	{
@@ -660,7 +660,7 @@ class SASUA_Canteens extends SASUA_Canteens_Object
 	 * @param	string $regex
 	 * @param	string $format
 	 * @throws	InvalidArgumentException
-	 * @return	string						string on success, false on failure
+	 * @return	string				string on success, false on failure
 	 */
 	private function __parseDate( $date, $regex, $format )
 	{
@@ -850,13 +850,13 @@ class SASUA_Canteens_Web extends SASUA_Canteens_Object
 	/**
 	 * Renders data and sets headers for proper browser display
 	 * 
-	 * @param string $zone		optional
-	 * @param string $type		optional
-	 * @param string $format	optional
-	 * @param bool $echo		optional
-	 * @return void|string		returns string if echo is false
+	 * @param	string $zone	optional
+	 * @param	string $type	optional
+	 * @param	string $format	optional
+	 * @param	bool $return	optional
+	 * @return	mixed		returns string if return is true, else it echo's the output
 	 */
-	public function render( $zone = null, $type = null, $format = null, $echo = true )
+	public function render( $zone = null, $type = null, $format = null, $return = false )
 	{
 		if ($zone !== null) {
 			$this->zone = $zone;
@@ -876,7 +876,9 @@ class SASUA_Canteens_Web extends SASUA_Canteens_Object
 			$this->type = 'week';
 			break;
 		}
-		
+
+		$output = null;
+
 		try {
 			if (! in_array( $this->type, $this->app->types, true ) || ! in_array( $this->zone, $this->app->zones, true )) {
 				throw new InvalidRequestException();
@@ -907,7 +909,7 @@ class SASUA_Canteens_Web extends SASUA_Canteens_Object
 			$output = (string) $this->error( $err, $this->format );
 		}
 		
-		if ($echo) {
+		if (! $return) {
 			$ctype = ! empty( $this->formats[$this->format] ) ? $this->formats[$this->format] : 'application/octet-stream';
 			$charset = strtolower( $this->app->getOutputEncoding() );
 			header( "Content-Type: $ctype;charset=$charset" );
@@ -953,8 +955,8 @@ class SASUA_Canteens_Web extends SASUA_Canteens_Object
 /**
  * Helper class for building and displaying errors for Web class
  * 
- * @package SASUA_Canteens
- * @subpackage SASUA_Canteens::Web
+ * @package	SASUA_Canteens
+ * @subpackage	SASUA_Canteens::Web
  */
 class SASUA_Canteens_Web_Error
 {
@@ -964,6 +966,13 @@ class SASUA_Canteens_Web_Error
 	public $format;
 
 
+	/**
+	 * Enter description here ...
+	 *
+	 * @param	string $message
+	 * @param	int $code		optional
+	 * @param	string $format		optional
+	 */
 	public function __construct( $message, $code = null, $format = null )
 	{
 		$this->message = $message;
@@ -972,6 +981,11 @@ class SASUA_Canteens_Web_Error
 	} // __construct }}}
 
 
+	/**
+	 * Enter description here ...
+	 *
+	 * @return	string
+	 */
 	public function __toString()
 	{
 		switch ($this->format) {
@@ -994,6 +1008,11 @@ class SASUA_Canteens_Web_Error
 	} // __toString }}}
 
 
+	/**
+	 * Enter description here ...
+	 *
+	 * @param	string $format
+	 */
 	public function setFormat( $format )
 	{
 		$format = strtolower( $format );
@@ -1013,8 +1032,8 @@ class SASUA_Canteens_Web_Error
 /**
  * Cache class
  *
- * @package SASUA_Canteens
- * @subpackage SASUA_Canteens::Cache
+ * @package	SASUA_Canteens
+ * @subpackage	SASUA_Canteens::Cache
  */
 class SASUA_Canteens_Cache extends SASUA_Canteens_Object
 {
@@ -1035,12 +1054,25 @@ class SASUA_Canteens_Cache extends SASUA_Canteens_Object
 	private static $__gcDivisor = 100;
 
 
+	/**
+	 * Enter description here ...
+	 *
+	 * @param	array $params	optional
+	 * @return	bool
+	 */
 	public static function key( $params = array() )
 	{
 		return new SASUA_Canteens_Cache_Key( $params, self::$config );
 	} // key }}}
 
 
+	/**
+	 * Enter description here ...
+	 *
+	 * @param	string $key
+	 * @param	mixed $data
+	 * @param	bool $writeIfEmpty	optional
+	 */
 	public static function write( $key, $data, $writeIfEmpty = false )
 	{
 		if (! self::$active || (! $writeIfEmpty && empty( $data ))) {
@@ -1060,6 +1092,12 @@ class SASUA_Canteens_Cache extends SASUA_Canteens_Object
 	} // write }}}
 
 
+	/**
+	 * Enter description here ...
+	 *
+	 * @param	string $key
+	 * @return	mixed
+	 */
 	public static function read( $key )
 	{
 		if (! self::$active) {
@@ -1075,6 +1113,12 @@ class SASUA_Canteens_Cache extends SASUA_Canteens_Object
 	} // read }}}
 
 
+	/**
+	 * Enter description here ...
+	 *
+	 * @param	mixed $config
+	 * @return	void
+	 */
 	public static function config( $config )
 	{
 		if (! is_array( $config )) {
@@ -1117,6 +1161,11 @@ class SASUA_Canteens_Cache extends SASUA_Canteens_Object
 	} // config }}}
 
 
+	/**
+	 * Enter description here ...
+	 *
+	 * @return	bool
+	 */
 	public static function gc()
 	{
 		if (self::$active && mt_rand( 1, self::$__gcDivisor ) <= self::$__gcProbability) {
@@ -1126,7 +1175,9 @@ class SASUA_Canteens_Cache extends SASUA_Canteens_Object
 					@unlink( $file );
 				}
 			}
+			return true;
 		}
+		return false;
 	} // gc }}}
 } // SASUA_Canteens_Cache }}}
 
@@ -1135,8 +1186,8 @@ class SASUA_Canteens_Cache extends SASUA_Canteens_Object
  * Hold cache key generation logic
  * Default behaviour is to append today's date making the cache last while the day lasts
  * 
- * @package SASUA_Canteens
- * @subpackage SASUA_Canteens::Cache
+ * @package	SASUA_Canteens
+ * @subpackage	SASUA_Canteens::Cache
  */
 class SASUA_Canteens_Cache_Key
 {
@@ -1150,6 +1201,12 @@ class SASUA_Canteens_Cache_Key
 	);
 
 
+	/**
+	 * Enter description here ...
+	 *
+	 * @param	array $params	optional
+	 * @param	array $config	optional
+	 */
 	public function __construct( $params = array(), $config = array() )
 	{
 		if (empty( $params )) {
@@ -1174,18 +1231,35 @@ class SASUA_Canteens_Cache_Key
 	} // __construct }}}
 
 
+	/**
+	 * Enter description here ...
+	 *
+	 * @return	string
+	 */
 	public function __toString()
 	{
 		return $this->key;
 	} // __toString }}}
 
 
+	/**
+	 * Enter description here ...
+	 *
+	 * @param	mixed $data
+	 * @param	bool $writeIfEmpty	optional
+	 * @return	bool
+	 */
 	public function write( $data, $writeIfEmpty = false )
 	{
 		return SASUA_Canteens_Cache::write( $this->key, $data, $writeIfEmpty );
 	} // write }}}
 
 
+	/**
+	 * Enter description here ...
+	 *
+	 * @return	bool
+	 */
 	public function read()
 	{
 		return SASUA_Canteens_Cache::read( $this->key );
@@ -1196,7 +1270,7 @@ class SASUA_Canteens_Cache_Key
 /**
  * Base abstract class
  *
- * @package SASUA_Canteens
+ * @package	SASUA_Canteens
  */
 abstract class SASUA_Canteens_Object
 {
@@ -1393,6 +1467,12 @@ class SASUA_Canteens_Menus extends SASUA_Canteens_Menu_Object
 	protected $_tag = 'menus';
 
 
+	/**
+	 * Enter description here ...
+	 *
+	 * @param	string $zone
+	 * @param	string $type
+	 */
 	public function __construct( $zone, $type )
 	{
 		parent::__construct();
@@ -1401,6 +1481,14 @@ class SASUA_Canteens_Menus extends SASUA_Canteens_Menu_Object
 	} // __construct }}}
 
 
+	/**
+	 * Enter description here ...
+	 *
+	 * @param	string $canteen
+	 * @param	string $meal
+	 * @param	string $date
+	 * @return	SASUA_Canteens_Menu
+	 */
 	public function add( $canteen, $meal, $date )
 	{
 		$child = new SASUA_Canteens_Menu( $this, $canteen, $meal, $date );
@@ -1409,6 +1497,13 @@ class SASUA_Canteens_Menus extends SASUA_Canteens_Menu_Object
 	} // add }}}
 
 
+	/**
+	 * Enter description here ...
+	 *
+	 * @param	bool $xmlDecl		optional
+	 * @param	string $encoding	optional
+	 * @return	string
+	 */
 	public function asXML( $xmlDecl = false, $encoding = 'utf-8' )
 	{
 		$xml = '';
@@ -1429,6 +1524,11 @@ class SASUA_Canteens_Menus extends SASUA_Canteens_Menu_Object
 	} // asXML }}}
 
 
+	/**
+	 * Enter description here ...
+	 *
+	 * @return	object
+	 */
 	public function asObj()
 	{
 		$obj = parent::asObj();
@@ -1463,6 +1563,14 @@ class SASUA_Canteens_Menu extends SASUA_Canteens_Menu_Object
 	public $_tagItems = 'items';
 
 
+	/**
+	 * Enter description here ...
+	 *
+	 * @param	object $parent	optional
+	 * @param	string $canteen
+	 * @param	string $meal
+	 * @param	string $date
+	 */
 	public function __construct( $parent = null, $canteen, $meal, $date )
 	{
 		parent::__construct( $parent );
@@ -1480,6 +1588,13 @@ class SASUA_Canteens_Menu extends SASUA_Canteens_Menu_Object
 	} // __construct }}}
 
 
+	/**
+	 * Enter description here ...
+	 *
+	 * @param	string $name
+	 * @param	string $content
+	 * @return	SASUA_Canteens_Menu_Item
+	 */
 	public function add( $name, $content )
 	{
 		$child = new SASUA_Canteens_Menu_Item( $this, $name, $content );
@@ -1488,6 +1603,12 @@ class SASUA_Canteens_Menu extends SASUA_Canteens_Menu_Object
 	} // add }}}
 
 
+	/**
+	 * Enter description here ...
+	 *
+	 * @param	string $reason	optional
+	 * @return	void
+	 */
 	public function disable( $reason = null )
 	{
 		if (empty( $reason ) && $reason !== 0) {
@@ -1497,6 +1618,13 @@ class SASUA_Canteens_Menu extends SASUA_Canteens_Menu_Object
 	} // disable }}}
 
 
+	/**
+	 * Enter description here ...
+	 *
+	 * @param	bool $xmlDecl		optional
+	 * @param	string $encoding	optional
+	 * @return	string
+	 */
 	public function asXML( $xmlDecl = false, $encoding = 'utf-8' )
 	{
 		$xml = '';
@@ -1523,6 +1651,11 @@ class SASUA_Canteens_Menu extends SASUA_Canteens_Menu_Object
 	} // asXML }}}
 
 
+	/**
+	 * Enter description here ...
+	 *
+	 * @return	object
+	 */
 	public function asObj()
 	{
 		$obj = parent::asObj();
@@ -1556,6 +1689,13 @@ class SASUA_Canteens_Menu_Item extends SASUA_Canteens_Menu_Object
 	protected $_tag = 'item';
 
 
+	/**
+	 * Enter description here ...
+	 *
+	 * @param	object $parent	optional
+	 * @param	string $name
+	 * @param	string $content
+	 */
 	public function __construct( $parent = null, $name, $content )
 	{
 		parent::__construct( $parent );
@@ -1564,6 +1704,13 @@ class SASUA_Canteens_Menu_Item extends SASUA_Canteens_Menu_Object
 	} // __construct }}}
 
 
+	/**
+	 * Enter description here ...
+	 *
+	 * @param	bool $xmlDecl		optional
+	 * @param	string $encoding	optional
+	 * @return	string
+	 */
 	public function asXML( $xmlDecl = false, $encoding = 'utf-8' )
 	{
 		$xmlObj = SASUA_Canteens_Utility::XMLObj( $this->_tag );
@@ -1577,6 +1724,11 @@ class SASUA_Canteens_Menu_Item extends SASUA_Canteens_Menu_Object
 	} // asXML }}}
 
 
+	/**
+	 * Enter description here ...
+	 *
+	 * @return	object
+	 */
 	public function asObj()
 	{
 		$obj = parent::asObj();
@@ -1601,6 +1753,11 @@ abstract class SASUA_Canteens_Menu_Object
 	protected $_children = array();
 
 
+	/**
+	 * Enter description here ...
+	 *
+	 * @param	object $parent	optional
+	 */
 	public function __construct( $parent = null )
 	{
 		if (empty( $this->_tag )) {
@@ -1610,33 +1767,66 @@ abstract class SASUA_Canteens_Menu_Object
 	} // __construct }}}
 
 
+	/**
+	 * Enter description here ...
+	 *
+	 * @param	bool $xmlDecl		optional
+	 * @param	string $encoding	optional
+	 * @return	string
+	 */
 	abstract public function asXML( $xmlDecl = false, $encoding = 'utf-8' );
 
 
+	/**
+	 * Enter description here ...
+	 *
+	 * @return	SimpleXMLElementXT
+	 */
 	public function asXMLObj()
 	{
 		return SASUA_Canteens_Utility::XMLObj( $this->_tag );
 	} // asXMLObj }}}
 
 
+	/**
+	 * Enter description here ...
+	 *
+	 * @return	object
+	 */
 	public function asObj()
 	{
 		return new stdClass();
 	} // asObj }}}
 
 
+	/**
+	 * Enter description here ...
+	 *
+	 * @return	string
+	 */
 	public function asJSON()
 	{
 		return SASUA_Canteens_Utility::toJSON( $this->asObj() );
 	} // asJSON }}}
 
 
+	/**
+	 * Enter description here ...
+	 *
+	 * @return	string
+	 */
 	public function asPHPS()
 	{
 		return SASUA_Canteens_Utility::toPHPS( $this->asObj() );
 	} // asPHPS }}}
 
 
+	/**
+	 * Enter description here ...
+	 *
+	 * @param	string $format
+	 * @return	mixed
+	 */
 	public function asFormat( $format )
 	{
 		switch (strtolower( $format )) {
@@ -1647,8 +1837,23 @@ abstract class SASUA_Canteens_Menu_Object
 			return $this->asJSON();
 		case 'phps':
 			return $this->asPHPS();
+		case 'obj':
+		case 'object':
+			return $this->asObj();
 		}
 	} // asFormat }}}
+
+
+	/**
+	 * Enter description here ...
+	 *
+	 * @param	string $tag
+	 * @return	void
+	 */
+	public function setTag( $tag )
+	{
+		$this->_tag = $tag;
+	} // setTag }}}
 } // SASUA_Canteens_Menu_Object }}}
 
 
@@ -1692,7 +1897,7 @@ class SimpleXMLElementXT extends SimpleXMLElement
 	 * 
 	 * @param	string $filename	optional
 	 * @param	array $options		optional
-	 * @return	string|bool
+	 * @return	mixed			returns xml if $filename is null, bool otherwise
 	 */
 	public function document( $filename = null, $options = array() )
 	{
