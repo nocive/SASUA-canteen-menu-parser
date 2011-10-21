@@ -877,7 +877,7 @@ class SASUA_Canteens_Web extends SASUA_Canteens_Object
 			break;
 		}
 
-		$this->format = ! empty( $this->formats[$this->format] ) ? $this->formats[$this->format] : 'xml';
+		$this->format = ! empty( $this->formats[$this->format] ) ? $this->format : 'xml';
 		$output = null;
 
 		try {
