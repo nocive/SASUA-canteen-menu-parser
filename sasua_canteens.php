@@ -106,6 +106,7 @@ class SASUA_Canteens extends SASUA_Canteens_Object
 	 */
 	public $curlOptions = array();
 	
+	
 	/**
 	 * @var		array
 	 * @access	private
@@ -153,7 +154,6 @@ class SASUA_Canteens extends SASUA_Canteens_Object
 	 * @param	string $cfgFilename			optional
 	 * @param	bool $cfgLoad				optional
 	 * @throws	PHPMissingRequirementException
-	 * @return	void
 	 */
 	public function __construct( $cfgFilename = null, $cfgLoad = true )
 	{
@@ -177,7 +177,6 @@ class SASUA_Canteens extends SASUA_Canteens_Object
 	/**
 	 * Destructor
 	 * 
-	 * @return	void
 	 */
 	public function __destruct()
 	{
@@ -376,12 +375,16 @@ class SASUA_Canteens extends SASUA_Canteens_Object
 	 * 
 	 * @param	string $zone
 	 * @param	string $type
-	 * @return	string|null
+	 * @throws	Exception
+	 * @return	string
 	 */
 	public function getUrl( $zone, $type )
 	{
 		$result = $this->config->xpath( "/config/zones/zone[@name='$zone']/urls/url[@type='$type']" );
-		return ! empty( $result ) && is_array( $result ) ? (string) $result[0] : null;
+		if (empty( $result ) || ! is_array( $result )) {
+			throw new InvalidArgumentException( "Can\'t find url matching params, zone: $zone, type: $type" );
+		}
+		return (string) $result[0];
 	} // getUrl }}}
 
 
@@ -412,7 +415,6 @@ class SASUA_Canteens extends SASUA_Canteens_Object
 	 * 
 	 * @param	string $zone
 	 * @param	string $type
-	 * @throws	InvalidArgumentException
 	 * @return	void
 	 */
 	private function __init( $zone, $type )
@@ -426,9 +428,6 @@ class SASUA_Canteens extends SASUA_Canteens_Object
 		$this->type = $type;
 		$this->zoneIndex = array_search( $zone, $this->zones );
 		$this->url = $this->getUrl( $this->zone, $this->type );
-		if (empty( $this->url )) {
-			throw new InvalidArgumentException( "Missing or no url matching params, zone: '{$this->zone}', type: '{$this->type}'" );
-		}
 		$this->menus = new SASUA_Canteens_Menus( $this->zone, $this->type );
 	} // __init }}}
 
@@ -877,6 +876,7 @@ class SASUA_Canteens_Web extends SASUA_Canteens_Object
 			break;
 		}
 
+		$this->format = ! empty( $this->formats[$this->format] ) ? $this->formats[$this->format] : 'xml';
 		$output = null;
 
 		try {
@@ -899,10 +899,6 @@ class SASUA_Canteens_Web extends SASUA_Canteens_Object
 				'msg' => 'An error has occured', 
 				'code' => 3 
 			);
-		}
-		
-		if (empty( $this->format )) {
-			$this->format = 'xml';
 		}
 		
 		if (isset( $e ) && $e instanceof Exception) {
@@ -960,9 +956,28 @@ class SASUA_Canteens_Web extends SASUA_Canteens_Object
  */
 class SASUA_Canteens_Web_Error
 {
+	/**
+	 * @var		string
+	 * @access	public
+	 */
 	public $rootNode = 'menus';
+
+	/**
+	 * @var		string
+	 * @access	public
+	 */
 	public $message;
+
+	/**
+	 * @var		int
+	 * @access	public
+	 */
 	public $code;
+
+	/**
+	 * @var		string
+	 * @access	public
+	 */
 	public $format;
 
 
@@ -1037,8 +1052,22 @@ class SASUA_Canteens_Web_Error
  */
 class SASUA_Canteens_Cache extends SASUA_Canteens_Object
 {
+	/**
+	 * @var		array
+	 * @access	public
+	 */
 	public static $config;
+
+	/**
+	 * @var		bool
+	 * @access	public
+	 */
 	public static $active = false;
+
+	/**
+	 * @var		array
+	 * @access	public
+	 */
 	public static $defaults = array( 
 		'active' => false, 
 		'path' => '', 
@@ -1049,8 +1078,22 @@ class SASUA_Canteens_Cache extends SASUA_Canteens_Object
 		'hash' => true 
 	);
 	
+	/**
+	 * @var		int
+	 * @access	private
+	 */
 	private static $__gcLifetime = 86400;
+
+	/**
+	 * @var		int
+	 * @access	private
+	 */
 	private static $__gcProbability = 10;
+
+	/**
+	 * @var		int
+	 * @access	private
+	 */
 	private static $__gcDivisor = 100;
 
 
@@ -1191,7 +1234,16 @@ class SASUA_Canteens_Cache extends SASUA_Canteens_Object
  */
 class SASUA_Canteens_Cache_Key
 {
+	/**
+	 * @var		string
+	 * @access	public
+	 */
 	public $key;
+
+	/**
+	 * @var		array
+	 * @access	public
+	 */
 	public $config = array( 
 		'prefix' => '', 
 		'extension' => '', 
@@ -1461,9 +1513,22 @@ class SASUA_Canteens_Utility
  */
 class SASUA_Canteens_Menus extends SASUA_Canteens_Menu_Object
 {
+	/**
+	 * @var		string
+	 * @access	public
+	 */
 	public $zone;
+
+	/**
+	 * @var		string
+	 * @access	public
+	 */
 	public $type;
 	
+	/**
+	 * @var		string
+	 * @access	protected
+	 */
 	protected $_tag = 'menus';
 
 
@@ -1552,15 +1617,54 @@ class SASUA_Canteens_Menus extends SASUA_Canteens_Menu_Object
  */
 class SASUA_Canteens_Menu extends SASUA_Canteens_Menu_Object
 {
+	/**
+	 * @var		string
+	 * @access	public
+	 */
 	public $canteen;
+	
+	/**
+	 * @var		string
+	 * @access	public
+	 */
 	public $meal;
+
+	/**
+	 * @var		string
+	 * @access	public
+	 */
 	public $date;
+
+	/**
+	 * @var		string
+	 * @access	public
+	 */
 	public $weekday;
+
+	/**
+	 * @var		int
+	 * @access	public
+	 */
 	public $weekdayNr;
+
+	/**
+	 * @var		bool
+	 * @access	public
+	 */
 	public $disabled = false;
 	
-	public $_tag = 'menu';
-	public $_tagItems = 'items';
+
+	/**
+	 * @var		string
+	 * @access	protected
+	 */
+	protected $_tag = 'menu';
+
+	/**
+	 * @var		string
+	 * @access	protected
+	 */
+	protected $_tagItems = 'items';
 
 
 	/**
@@ -1683,9 +1787,22 @@ class SASUA_Canteens_Menu extends SASUA_Canteens_Menu_Object
  */
 class SASUA_Canteens_Menu_Item extends SASUA_Canteens_Menu_Object
 {
+	/**
+	 * @var		string
+	 * @access	public
+	 */
 	public $name;
+	
+	/**
+	 * @var		string
+	 * @access	public
+	 */
 	public $content;
 	
+	/**
+	 * @var		string
+	 * @access	protected
+	 */
 	protected $_tag = 'item';
 
 
@@ -1748,9 +1865,23 @@ class SASUA_Canteens_Menu_Item extends SASUA_Canteens_Menu_Object
  */
 abstract class SASUA_Canteens_Menu_Object
 {
-	protected $_tag;
+	/**
+	 * @var		object
+	 * @access	protected
+	 */
 	protected $_parent;
+
+	/**
+	 * @var		array
+	 * @access	protected
+	 */
 	protected $_children = array();
+
+	/**
+	 * @var		string
+	 * @access	protected
+	 */
+	protected $_tag;
 
 
 	/**
