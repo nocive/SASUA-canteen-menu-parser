@@ -366,6 +366,9 @@ class SASUA_Canteens extends SASUA_Canteens_Object
 			trigger_error( 'Failed to detect website encoding, encoding conversion skipped', E_USER_NOTICE );
 		}
 		
+		// load up xpath before calling parser
+		$this->__xpath = new DOMXPath( $this->__dom );
+
 		$this->__parse();
 	} // load }}}
 
@@ -454,8 +457,6 @@ class SASUA_Canteens extends SASUA_Canteens_Object
 	 */
 	private function __parse()
 	{
-		$this->__xpath = new DOMXPath( $this->__dom );
-		
 		switch ($this->type) {
 		case 'day':
 			$this->__parseDailyMenu();
