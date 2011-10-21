@@ -1,4 +1,7 @@
-TODO
----------------------------
-o) function docblocks
-o) drop all switch case's for the formats and implement it in a more clever way
+
+Description
+------------------------------
+
+SASUA Canteens is a canteen menu parser for Universidade de Aveiro, Portugal.
+It crawls SAS/UA pages (http://www2.sas.ua.pt/site/temp/alim_ementas_V2.asp) and extracts all canteen menu info from the html spaguetti, displaying it in more machine friendly formats.
+
